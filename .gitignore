@@ -1,0 +1,5 @@
+# Logs (contain personal device data)
+logs/
+
+# macOS
+.DS_Store
