@@ -1,5 +1,8 @@
 # Logs (contain personal device data)
 logs/
 
+# Credentials (lock codes, programming codes)
+credentials/
+
 # macOS
 .DS_Store

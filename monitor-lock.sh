@@ -3,7 +3,7 @@
 # Usage: ./monitor-lock.sh [device-id]
 # Default: Front Door lock
 
-FRONT_DOOR_ID="39cba0dc-cfca-4fb9-a1c5-d384e33c1acd"
+FRONT_DOOR_ID="946ebd78-beb2-4973-869e-ec00c4155c48"
 UTILITY_DOOR_ID="b0501125-5eb8-4060-851f-9d59fd38d664"
 
 DEVICE_ID="${1:-$FRONT_DOOR_ID}"
