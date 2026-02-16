@@ -3,8 +3,9 @@
 # Usage: ./monitor-lock.sh [device-id]
 # Default: Front Door lock
 
-FRONT_DOOR_ID="946ebd78-beb2-4973-869e-ec00c4155c48"
-UTILITY_DOOR_ID="b0501125-5eb8-4060-851f-9d59fd38d664"
+FRONT_DOOR_ID="a9a852ec-f357-4de0-a12b-240df0ade739"
+UTILITY_DOOR_ID="915d7c8b-b66f-414e-ae48-1fcfc9d53db5"
+GARAGE_DOOR_ID="b608437a-d821-41f9-b8f1-24b858477b2d"
 
 DEVICE_ID="${1:-$FRONT_DOOR_ID}"
 LOG_DIR="$HOME/projects/smart/logs"
@@ -129,4 +130,5 @@ echo "Run this script daily to track battery drain"
 echo "Compare both locks:"
 echo "  ./monitor-lock.sh  (Front Door - default)"
 echo "  ./monitor-lock.sh $UTILITY_DOOR_ID  (Utility door)"
+echo "  ./monitor-lock.sh $GARAGE_DOOR_ID  (Garage Door)"
 echo "============================================"

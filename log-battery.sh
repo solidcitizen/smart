@@ -38,9 +38,10 @@ echo "=== SmartThings Battery Logger ==="
 echo "Date: $(date)"
 echo ""
 
-# Log both locks
-log_device "946ebd78-beb2-4973-869e-ec00c4155c48"  # Front door
-log_device "b0501125-5eb8-4060-851f-9d59fd38d664"  # Utility door
+# Log all locks
+log_device "a9a852ec-f357-4de0-a12b-240df0ade739"  # Front door
+log_device "915d7c8b-b66f-414e-ae48-1fcfc9d53db5"  # Utility door
+log_device "b608437a-d821-41f9-b8f1-24b858477b2d"  # Garage Door
 
 echo ""
 echo "Log file: $LOG_FILE"
