@@ -129,3 +129,72 @@ All three Schlage locks now use the **RBoy Universal Enhanced Z-Wave Lock** driv
 - SmartThings does not offer option to skip S2 on this device
 - Works fine close to hub; fails from office (~30+ ft through walls)
 - Replacing with Leviton DZPA1 (non-secure, proven reliable)
+
+## HomeIT — Home Assistant on Synology
+
+As of Feb 2026, primary monitoring has moved to **Home Assistant** running on the Synology NAS (IRIS, DS1520+). The SmartThings CLI scripts in this repo remain useful for ad-hoc Z-Wave diagnostics (provisioning state, security level, driver info) that HA doesn't expose.
+
+### Architecture
+
+```
+SmartThings Hub (Z-Wave) ──cloud──▶ SmartThings Cloud
+                                         │
+                                    Nabu Casa OAuth
+                                         │
+                                         ▼
+Synology IRIS (DS1520+) ◀── Docker ── Home Assistant (2026.2.x)
+  └─ /volume3/docker/homeassistant/      │
+                                         ├── Lock Monitor dashboard
+                                         ├── Battery alert automation
+                                         └── 61 SmartThings entities
+```
+
+### What's in HA
+
+- **Lock Monitor dashboard** — Real-time lock status tiles with lock/unlock controls, battery gauges (color-coded: green >50%, yellow 20-50%, red <20%), 30-day battery history graph, tamper status, and lock activity logbook
+- **Battery alert automation** — Persistent notification + push to iPhone when any lock battery drops below 20%
+- **SmartThings integration** — 31 devices / 61 entities including locks, switches, lights, climate, and media players
+
+### What stays in CLI scripts
+
+The SmartThings CLI exposes Z-Wave details that HA does not:
+- `provisioningState` (PROVISIONED vs NONFUNCTIONAL)
+- `networkSecurityLevel` (S0_LEGACY, S2_ACCESS_CONTROL, etc.)
+- Device health state and event history
+- Z-Wave network IDs and driver assignments
+
+Use `monitor-lock.sh` for deep diagnostics; use HA for day-to-day monitoring.
+
+### Synology Setup
+
+| Resource | Value |
+|----------|-------|
+| NAS | Synology DS1520+ (IRIS) |
+| HA Config | `/volume3/docker/homeassistant/` |
+| HA Container | `home_assistant` (Docker, host networking, port 8123) |
+| HA URL | `http://10.1.11.98:8123` |
+| Git Working Copy | `/volume3/docker/projects/smart/` |
+| Git Bare Repo | `/volume3/docker/git/smart.git` (auto-deploy via post-receive hook) |
+
+### Git Remotes
+
+This repo has two remotes:
+
+```bash
+# Push to GitHub
+git push origin main
+
+# Push to Synology (auto-deploys to /volume3/docker/projects/smart/)
+git push synology main
+
+# Push to both
+git push origin main && git push synology main
+```
+
+### HA Configuration Files (on Synology)
+
+| File | Purpose |
+|------|---------|
+| `configuration.yaml` | Main config — includes Lock Monitor dashboard registration |
+| `automations.yaml` | Battery alert automation (low_battery_alert) |
+| `dashboards/lock-monitor.yaml` | Lock Monitor dashboard layout (YAML mode) |
