@@ -172,7 +172,8 @@ Use `monitor-lock.sh` for deep diagnostics; use HA for day-to-day monitoring.
 | NAS | Synology DS1520+ (IRIS) |
 | HA Config | `/volume3/docker/homeassistant/` |
 | HA Container | `home_assistant` (Docker, host networking, port 8123) |
-| HA URL | `http://10.1.11.98:8123` |
+| HA URL (external) | `https://ha.conant.com` |
+| HA URL (internal) | `http://10.1.11.98:8123` |
 | Git Working Copy | `/volume3/docker/projects/smart/` |
 | Git Bare Repo | `/volume3/docker/git/smart.git` (auto-deploy via post-receive hook) |
 
@@ -191,10 +192,24 @@ git push synology main
 git push origin main && git push synology main
 ```
 
+### HTTPS Access (ha.conant.com)
+
+| Resource | Value |
+|----------|-------|
+| URL | `https://ha.conant.com` |
+| DNS | CNAME `ha` → `conant.synology.me` (auto-follows Synology DDNS) |
+| Certificate | Let's Encrypt wildcard (`*.conant.com` + `conant.com`), ECC, expires May 2026 |
+| Cert Tool | acme.sh v3.1.3 at `/volume3/docker/acme.sh/` with GoDaddy DNS-01 challenge |
+| Reverse Proxy | DSM Login Portal → Reverse Proxy: `https://ha.conant.com:443` → `http://localhost:8123` |
+| WebSocket | Enabled (Upgrade + Connection headers) |
+| Auto-Renewal | DSM Task Scheduler "Renew wildcard cert" — daily 3 AM, runs `renew-and-deploy.sh` |
+
+**Note:** Auto-renewal renews the cert in acme.sh's store but does not re-deploy to DSM automatically. After renewal (~every 60 days), the cert must be manually re-imported via DSM Security > Certificate, or the deploy hook needs to be configured with DSM credentials.
+
 ### HA Configuration Files (on Synology)
 
 | File | Purpose |
 |------|---------|
-| `configuration.yaml` | Main config — includes Lock Monitor dashboard registration |
+| `configuration.yaml` | Main config — includes Lock Monitor dashboard, `http` (trusted_proxies), `homeassistant` (external/internal URLs) |
 | `automations.yaml` | Battery alert automation (low_battery_alert) |
 | `dashboards/lock-monitor.yaml` | Lock Monitor dashboard layout (YAML mode) |

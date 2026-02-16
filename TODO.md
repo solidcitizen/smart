@@ -1,27 +1,8 @@
 # Smart Home Diagnostics - Project TODOs
 
-## HomeIT Phase 1 (Active)
+## HomeIT Phase 1 (Complete)
 
-- [ ] **Configure Home Assistant SmartThings integration**
-  - HA running on Synology IRIS (DS1520+) in Docker
-  - Needs external URL for webhooks (Nabu Casa or Synology reverse proxy)
-  - SmartThings PAT with device/location scopes
-  - Expected: lock entities, battery sensors, switch entities
-
-- [ ] **Build HA battery monitoring dashboard**
-  - Battery gauge cards for all 3 locks
-  - Lock status cards (locked/unlocked)
-  - 30-day battery history graph (replaces battery-trend.sh for visual monitoring)
-  - Lock event logbook
-
-- [ ] **Create battery alert automation in HA**
-  - Trigger on any lock battery < 20%
-  - Persistent notification (mobile push later in Phase 3)
-
-- [ ] **Sync git repo to Synology**
-  - Clone to `/volume3/projects/smart`
-  - Set up bare repo at `/volume3/git/smart.git` with post-receive hook
-  - Add `synology` remote on Mac
+All Phase 1 items completed — see Completed section below.
 
 ## High Priority
 
@@ -64,9 +45,10 @@
 ## HomeIT Phase 2 (Future Roadmap)
 
 - [ ] **HomeIT strategy document** — Map all services (HA, Surveillance Station, Hyper Backup, Active Backup M365, Homebridge, VPN, DNS)
+- [ ] **Wildcard cert auto-deploy to DSM** — Renewal script renews in acme.sh store but doesn't re-import to DSM. Need to configure acme.sh deploy hook with DSM credentials, or script the Synology certificate API
 - [ ] **Docker Compose migration** — Move standalone containers to declarative docker-compose.yml
 - [ ] **Docker image cleanup** — 429 images / 438.8 GB. Prune unused, add `--cleanup` to Watchtower
-- [ ] **Synology maintenance** — DSM 7.3.2 update, pending package updates, storage audit (Vol 1 & 2 at 89%)
+- [ ] **Synology maintenance** — ~~DSM 7.3.2 update~~ Done (7.3.2-86009), storage audit (Vol 1 & 2 at 89%), clean up deprecated packages (PHP 7.3/7.4/8.0, Node.js v16)
 - [ ] **Business continuity audit** — Verify Glacier backup coverage, test restore, document RTO/RPO, back up Docker configs
 - [ ] **Synology DSM integration in HA** — NAS health monitoring dashboard
 - [ ] **Surveillance Station in HA** — Camera feeds on same dashboard as locks
@@ -101,3 +83,13 @@
 - [x] Document all Z-Wave devices in README and portal findings
 - [x] Document cron job setup for battery logging
 - [x] Fix monitor-lock.sh null battery handling — Feb 15
+- [x] Configure HA SmartThings integration (Nabu Casa OAuth, 31 devices / 61 entities) — Feb 15
+- [x] Build Lock Monitor dashboard (battery gauges, lock controls, history graph, logbook) — Feb 15
+- [x] Create battery alert automation (< 20% → persistent notification + iPhone push) — Feb 15
+- [x] Sync git repo to Synology (bare repo + post-receive auto-deploy) — Feb 15
+- [x] Issue Let's Encrypt wildcard cert (`*.conant.com`) via acme.sh + GoDaddy DNS-01 — Feb 15
+- [x] Configure DSM reverse proxy: `https://ha.conant.com` → `http://localhost:8123` — Feb 15
+- [x] Set up DNS: CNAME `ha` → `conant.synology.me` on GoDaddy — Feb 15
+- [x] Configure HA `http` (trusted_proxies) and `homeassistant` (external/internal URLs) — Feb 15
+- [x] Set up cert auto-renewal in DSM Task Scheduler — Feb 15
+- [x] Update DSM to 7.3.2-86009 — Feb 15
