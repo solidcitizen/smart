@@ -85,7 +85,9 @@ else
     echo "[WARN] Provisioning state: $PROV_STATE (needs re-pairing)"
 fi
 
-if [ "$BATTERY" -gt 50 ]; then
+if [ "$BATTERY" = "null" ] || [ -z "$BATTERY" ]; then
+    echo "[WARN] Battery level: unknown (not yet reported)"
+elif [ "$BATTERY" -gt 50 ]; then
     echo "[OK] Battery level: ${BATTERY}%"
 elif [ "$BATTERY" -gt 20 ]; then
     echo "[WARN] Battery level: ${BATTERY}% (getting low)"

@@ -28,6 +28,15 @@ grep "Utility door" "$LOG_FILE" | tail -14 | while IFS=, read -r ts label id bat
 done
 
 echo ""
+
+# Garage Door history
+echo "Garage Door:"
+grep "Garage Door" "$LOG_FILE" | tail -14 | while IFS=, read -r ts label id battery security prov; do
+    date_only=$(echo "$ts" | cut -d'T' -f1)
+    printf "  %s: %s%%\n" "$date_only" "$battery"
+done
+
+echo ""
 echo "---"
 
 # Calculate drain rate for Front door (if enough data)
@@ -44,6 +53,40 @@ if [ $(echo "$FRONT_DATA" | wc -l) -ge 2 ]; then
     if [ "$FIRST_BAT" != "$LAST_BAT" ] && [ "$FIRST_BAT" != "null" ] && [ "$LAST_BAT" != "null" ]; then
         DRAIN=$((FIRST_BAT - LAST_BAT))
         echo "Front door drain: ${DRAIN}% from $FIRST_DATE to $LAST_DATE"
+    fi
+fi
+
+# Calculate drain rate for Utility door
+UTIL_DATA=$(grep "Utility door" "$LOG_FILE" | grep -v "null" | tail -2)
+if [ $(echo "$UTIL_DATA" | wc -l) -ge 2 ]; then
+    FIRST=$(echo "$UTIL_DATA" | head -1)
+    LAST=$(echo "$UTIL_DATA" | tail -1)
+
+    FIRST_BAT=$(echo "$FIRST" | cut -d',' -f4)
+    LAST_BAT=$(echo "$LAST" | cut -d',' -f4)
+    FIRST_DATE=$(echo "$FIRST" | cut -d',' -f1 | cut -d'T' -f1)
+    LAST_DATE=$(echo "$LAST" | cut -d',' -f1 | cut -d'T' -f1)
+
+    if [ "$FIRST_BAT" != "$LAST_BAT" ] && [ "$FIRST_BAT" != "null" ] && [ "$LAST_BAT" != "null" ]; then
+        DRAIN=$((FIRST_BAT - LAST_BAT))
+        echo "Utility door drain: ${DRAIN}% from $FIRST_DATE to $LAST_DATE"
+    fi
+fi
+
+# Calculate drain rate for Garage Door
+GARAGE_DATA=$(grep "Garage Door" "$LOG_FILE" | grep -v "null" | tail -2)
+if [ $(echo "$GARAGE_DATA" | wc -l) -ge 2 ]; then
+    FIRST=$(echo "$GARAGE_DATA" | head -1)
+    LAST=$(echo "$GARAGE_DATA" | tail -1)
+
+    FIRST_BAT=$(echo "$FIRST" | cut -d',' -f4)
+    LAST_BAT=$(echo "$LAST" | cut -d',' -f4)
+    FIRST_DATE=$(echo "$FIRST" | cut -d',' -f1 | cut -d'T' -f1)
+    LAST_DATE=$(echo "$LAST" | cut -d',' -f1 | cut -d'T' -f1)
+
+    if [ "$FIRST_BAT" != "$LAST_BAT" ] && [ "$FIRST_BAT" != "null" ] && [ "$LAST_BAT" != "null" ]; then
+        DRAIN=$((FIRST_BAT - LAST_BAT))
+        echo "Garage Door drain: ${DRAIN}% from $FIRST_DATE to $LAST_DATE"
     fi
 fi
 
