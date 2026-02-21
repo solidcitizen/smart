@@ -1,21 +1,9 @@
 # IRIS NAS — Data Management & Backup Guide
 
 **NAS:** Synology DS1520+ (IRIS)
-**IP:** 10.1.11.98:2222 (SSH) | DSM: https://conant.synology.me:5001
-**DSM Version:** 7.3.2-86009
 **Last Audit:** February 20, 2026
 
----
-
-## Volume Status
-
-| Volume | Total | Used | Free | Usage | Primary Contents |
-|--------|-------|------|------|-------|-----------------|
-| volume1 | 15 TB | 13 TB | 1.6 TB | 90% | Music, video, surveillance, web |
-| volume2 | 2.9 TB | 2.6 TB | 308 GB | 90% | fuji Time Machine (2.6 TB) |
-| volume3 | 19 TB | 12 TB | 7.1 TB | 62% | Photos, archive, backup, docker, homes |
-
-**Warning:** Volumes 1 & 2 at 90%. Volume 3 cleaned up Feb 20 (was 72%, now 62%).
+> See also: [Service Registry](docs/services.md) for hardware, services, and current config | [Runbook](docs/runbook.md) for operational procedures | [CHANGELOG](CHANGELOG.md) for change history
 
 ---
 
@@ -40,7 +28,7 @@
 |---------------|-----------|----------|
 | `/volume2/fujibackup/` | ~2.6 TB | fuji Time Machine — still in use but stale (last backup 2021) |
 
-### Volume 3 — Core Data (19 TB, 72% used)
+### Volume 3 — Core Data (19 TB, 62% used after Phase 1 cleanup)
 
 | Shared Folder | Est. Size | Contents |
 |---------------|-----------|----------|
@@ -68,7 +56,7 @@
 | **Important** | Mac Time Machine — fuji (stale) | `/volume2/fujibackup/` | Deferred — see Phase 1e | Medium |
 | **Protected elsewhere** | PC data (OneDrive) | OneDrive | Microsoft cloud | N/A |
 | **Protected elsewhere** | Git repos | GitHub + Synology bare repo | GitHub | N/A |
-| **Protected elsewhere** | M365 email/calendar | Active Backup for M365 | Synology local | N/A |
+| **Important** | Cadence Group M365 (OneDrive, email) | Active Backup for M365 (continuous) | Synology local | High |
 | **Ephemeral** | Surveillance recordings | `/volume1/surveillance/` | None (auto-recycled) | Low |
 | **Ephemeral** | Downloads | `/volume3/Downloads/` | None | Low |
 | **Redundant** | Old Windows image backups | `/volume3/backup/WindowsImageBackup*` | Delete after verification | Cleanup |
@@ -275,18 +263,9 @@ gala's last backup was October 2025 — 4 months ago. Verify on the Mac:
 
 - [ ] gala Time Machine verified and running
 
-### 3b. Annual Review Checklist
+### 3b. Audit Checklists
 
-Perform annually (set calendar reminder for February):
-
-- [ ] Review all shared folders — identify new data, prune stale data
-- [ ] Check volume utilization — flag anything over 85%
-- [ ] Verify Hyper Backup task is running and completing successfully
-- [ ] Spot-check S3 bucket — confirm data is present and recent
-- [ ] Test a restore of at least one folder from S3
-- [ ] Review S3 costs — adjust storage class if costs are unexpected
-- [ ] Check all Time Machine clients — are they still backing up?
-- [ ] Review this document — update sizes, add new data sources
+See [Runbook — Quarterly Audit](docs/runbook.md#quarterly-audit-checklist) and [Runbook — Annual Audit](docs/runbook.md#annual-audit-checklist).
 
 ---
 
@@ -372,7 +351,7 @@ Created via CLI (`aws configure` profile on Mac as `mikebackup`):
 | Surveillance recordings | volume1 | No | None | Ephemeral |
 | PC data | — | — | OneDrive | Covered |
 | Git repos | volume3 | Yes (in docker) | GitHub | Covered |
-| M365 backup | volume3 | No | Active Backup for M365 | Covered (local) |
+| Cadence Group M365 | volume3 | No | Active Backup for M365 (continuous, local) | Covered — retention beyond M365's 30-day window |
 
 ---
 
@@ -437,53 +416,9 @@ To access PSTs: mount the archive share or restore from S3, then open in Outlook
 
 ---
 
-## Maintenance Schedule
-
-| Cadence | Task | How |
-|---------|------|-----|
-| **Daily** | Hyper Backup runs | Automatic at 2:00 AM |
-| **Daily** | Wildcard cert renewal check | DSM Task Scheduler at 3:00 AM |
-| **Monthly** | Hyper Backup integrity check | Automatic (configured in task) |
-| **Quarterly** | Review S3 costs in AWS Console | Manual — check billing dashboard |
-| **Quarterly** | Check Hyper Backup status in DSM | Manual — verify last success, check logs |
-| **Annually** | Full data audit | See Annual Review Checklist above |
-
 ---
 
-## Docker Containers
-
-### Running
-
-| Container | Image | Network |
-|-----------|-------|---------|
-| home_assistant | homeassistant/home-assistant:latest | host |
-| portainer | portainer/portainer-ce:latest | bridge (9000, 9443) |
-| watchtower | containrrr/watchtower:latest | bridge (--cleanup enabled) |
-| oznu-homebridge | oznu/homebridge:latest | host |
-
-### Stopped — Candidates for Removal
-
-| Container | Image | Status |
-|-----------|-------|--------|
-| ubuntu1 | ubuntu:latest | Stopped (utility container) |
-
-**Docker image cleanup:** Watchtower now runs with `--cleanup` flag. Old dangling images are pruned automatically. For manual cleanup:
-
-```bash
-docker=/var/packages/ContainerManager/target/usr/bin/docker
-$docker image prune -a --filter "until=168h"
-```
-
----
-
-## Backup Packages on NAS
-
-| Package | Status | Purpose |
-|---------|--------|---------|
-| HyperBackup | **Active** | Offsite backup to S3 (daily) |
-| GlacierBackup | Installed (unused) | Legacy — superseded by Hyper Backup → S3 |
-| ActiveBackup-Office365 | Installed | Microsoft 365 backup (needs verification) |
-| HyperBackupVault | Installed | Receive backups from other devices |
+> Docker containers and DSM packages are tracked in [services.md](docs/services.md#docker-containers). Operational schedules and audit checklists are in the [Runbook](docs/runbook.md).
 
 ---
 
@@ -498,7 +433,7 @@ $docker image prune -a --filter "until=168h"
 | Email PSTs | 24 hours | 8–24 hours | Daily S3 backup (after consolidation) |
 | Git repos | 0 (realtime) | 1 hour | Mirrored to GitHub |
 | Surveillance | 30 days | 24 hours | Recordings are ephemeral |
-| M365 Backup | Per Active Backup schedule | — | Managed by Synology package |
+| Cadence Group M365 | Continuous | 1 hour | Active Backup for M365 — retention beyond OneDrive's 30-day deletion window |
 
 **Recovery Priority Order:**
 1. Network connectivity (Eero, Synology)
@@ -535,47 +470,32 @@ For a full NAS rebuild: install Hyper Backup first, then create a "restore task"
 
 ---
 
-## Action Items
+## Open Action Items
 
-### Completed
+> Completed items are tracked in [CHANGELOG.md](CHANGELOG.md). General TODOs in [TODO.md](TODO.md).
 
-- [x] Created docker-compose.yml — Feb 20
-- [x] Added `--cleanup` to Watchtower — Feb 20
-- [x] Deployed docker-compose.yml (4 containers migrated) — Feb 20
-- [x] Cleaned up stopped containers (removed 5 old containers) — Feb 20
-- [x] Configured Hyper Backup → S3 (Docker configs, daily 2 AM, encrypted) — Feb 20
-
-### Phase 1 — Cleanup (Do before expanding backup)
-
-- [x] **1a.** Delete mike's stale TM bundles (V3Q1YFVQ41, walle) — 729 GB reclaimed — Feb 20
-- [x] **1b.** Delete Julia's stale TM bundles (4 bundles) — 1.64 TB reclaimed — Feb 20
-- [x] **1c.** Delete WindowsImageBackup-8-Jul-12 — 254 GB reclaimed — Feb 20
-- [x] **1d.** Consolidate PSTs into `/volume3/archive/mail/` (32 PSTs, 44 GB), HOBBS junk deleted — Feb 20
+### Phase 1 — Cleanup
 - [ ] **1e.** Decide on fuji TM bundle (2.6 TB on volume2) — deferred
+- [ ] Decide whether to keep DeletedItems07.pst (6.1 GB) and sentitems07.pst (1.6 GB)
+- [ ] Verify: no unique PSTs remain only in backup/duplicate dirs
 
 ### Phase 2 — Expand Offsite Backup
-
 - [ ] Add `/volume3/photo/`, `/volume3/archive/`, `/volume1/video/familyvideos/`, `/volume3/homes/`, `/volume3/backup/` to Hyper Backup S3 task
 - [ ] Run initial full backup (~1 TB upload)
 - [ ] Verify backup with `aws s3 ls s3://iris-synology-backup/ --recursive --summarize`
 
 ### Phase 3 — Verify & Maintain
-
 - [ ] Check gala Time Machine — trigger manual backup if needed
 - [ ] Verify first expanded S3 backup
 - [ ] Delete old root access key in AWS Console (security hygiene)
-- [ ] Verify Active Backup for M365 status in DSM
 - [ ] Set annual calendar reminder for data audit (February)
 
 ### Verification Commands
 
 ```bash
-# Check volume free space after cleanup
+# Check volume free space
 ssh mike@10.1.11.98 -p 2222 "df -h /volume1 /volume2 /volume3"
 
 # Check S3 backup size
 aws s3 ls s3://iris-synology-backup/ --recursive --summarize
-
-# Check Hyper Backup last run (in DSM UI)
-# DSM → Hyper Backup → Task list → check "Last backup time" and status
 ```

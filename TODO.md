@@ -44,7 +44,7 @@ All Phase 1 items completed — see Completed section below.
 
 ## HomeIT Phase 2 (Future Roadmap)
 
-- [ ] **HomeIT strategy document** — Map all services (HA, Surveillance Station, Hyper Backup, Active Backup M365, Homebridge, VPN, DNS)
+- [x] **HomeIT strategy document** — ITSM framework created: [services.md](docs/services.md), [runbook.md](docs/runbook.md), [CHANGELOG.md](CHANGELOG.md)
 - [ ] **Wildcard cert auto-deploy to DSM** — Renewal script renews in acme.sh store but doesn't re-import to DSM. Need to configure acme.sh deploy hook with DSM credentials, or script the Synology certificate API
 - [x] **Docker Compose migration** — Created docker-compose.yml with Watchtower --cleanup
 - [ ] **Docker image cleanup** — Run scripts/docker-cleanup.sh to prune (deploy compose first)
@@ -53,6 +53,23 @@ All Phase 1 items completed — see Completed section below.
 - [ ] **Synology DSM integration in HA** — NAS health monitoring dashboard
 - [ ] **Surveillance Station in HA** — Camera feeds on same dashboard as locks
 - [ ] **Evaluate Homebridge overlap** — HA has native HomeKit Bridge; Homebridge may be redundant
+
+## ITSM Documentation — Service Onboarding
+
+Bring undocumented services into the [Service Registry](docs/services.md) and [Runbook](docs/runbook.md). Each item needs: IP/config details, health check procedure, and a runbook entry.
+
+- [ ] **Enphase Envoy** — Get IP address, model, API details; document setup in HA (59 devices)
+- [ ] **Denon AVR / HEOS** — Get IP address, model; document setup in HA (10 devices)
+- [ ] **Surveillance Station** — Document camera list, retention settings, storage consumption
+- [ ] **Eero mesh** — Document model, WiFi config, DHCP range; install Eero integration in HA (needs HACS)
+- [ ] **VPN Center** — Document config, purpose, users
+- [ ] **Mail Server** — Document purpose, cron tasks (daily clean_junk, weekly quarantine clean)
+- [ ] **MediaServer** — Document purpose, media sources, whether still needed
+- [ ] **MariaDB10** — Document purpose, databases, whether still needed
+- [ ] **WebStation** — Document purpose, sites hosted on /volume1/web/
+- [ ] **CloudSync** — Document sync targets, status
+- [ ] **SynologyDrive** — Document purpose, sync clients
+- [ ] **GlacierBackup** — Remove (superseded by Hyper Backup → S3) or document why kept
 
 ## HomeIT Phase 3 (Future Roadmap)
 

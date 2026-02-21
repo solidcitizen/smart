@@ -213,3 +213,13 @@ git push origin main && git push synology main
 | `configuration.yaml` | Main config — includes Lock Monitor dashboard, `http` (trusted_proxies), `homeassistant` (external/internal URLs) |
 | `automations.yaml` | Battery alert automation (low_battery_alert) |
 | `dashboards/lock-monitor.yaml` | Lock Monitor dashboard layout (YAML mode) |
+
+## Related Documentation
+
+| Document | Scope |
+|----------|-------|
+| [docs/services.md](docs/services.md) | Service registry — hardware, network, all services and their config |
+| [docs/runbook.md](docs/runbook.md) | Operational procedures, health checks, incident response |
+| [CHANGELOG.md](CHANGELOG.md) | Dated log of all configuration changes |
+| [RECOVERY.md](RECOVERY.md) | Backup strategy, data classification, disaster recovery, S3 config |
+| [TODO.md](TODO.md) | Planned work and roadmap |
