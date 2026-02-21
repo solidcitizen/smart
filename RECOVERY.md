@@ -1,150 +1,262 @@
-# Synology Backup Audit & Recovery Guide
+# IRIS NAS — Data Management & Backup Guide
 
-**Audit Date:** February 20, 2026
 **NAS:** Synology DS1520+ (IRIS)
-**IP:** 10.1.11.98:2222 (SSH)
+**IP:** 10.1.11.98:2222 (SSH) | DSM: https://conant.synology.me:5001
+**DSM Version:** 7.3.2-86009
+**Last Audit:** February 20, 2026
+
+---
 
 ## Volume Status
 
-| Volume | Total | Used | Free | Usage |
-|--------|-------|------|------|-------|
-| volume1 | 15 TB | 13 TB | 1.6 TB | 90% |
-| volume2 | 2.9 TB | 2.6 TB | 308 GB | 90% |
-| volume3 | 19 TB | 13 TB | 5.2 TB | 72% |
+| Volume | Total | Used | Free | Usage | Primary Contents |
+|--------|-------|------|------|-------|-----------------|
+| volume1 | 15 TB | 13 TB | 1.6 TB | 90% | Music, video, surveillance, web |
+| volume2 | 2.9 TB | 2.6 TB | 308 GB | 90% | fuji Time Machine (2.6 TB) |
+| volume3 | 19 TB | 13 TB | 5.2 TB | 72% | Photos, archive, backup, docker, homes |
 
-**Warning:** Volumes 1 & 2 at 90% - cleanup recommended.
+**Warning:** Volumes 1 & 2 at 90% — cleanup in progress (see Phase 1 below).
 
-## Backup Packages Installed
+---
 
-| Package | Status | Purpose |
-|---------|--------|---------|
-| HyperBackup | Installed | General backup to local/cloud |
-| GlacierBackup | Installed | AWS Glacier archive (429 MB local cache) |
-| ActiveBackup-Office365 | Installed | Microsoft 365 backup |
-| HyperBackupVault | Installed | Receive backups from other devices |
+## Data Inventory
 
-## Docker Containers
+### Volume 1 — Media & Services (15 TB, 90% used)
 
-### Running (5)
+| Shared Folder | Est. Size | Contents |
+|---------------|-----------|----------|
+| `/volume1/music/` | ~10 TB | Music library |
+| `/volume1/video/` | ~1.5 TB | Video content (includes `familyvideos/` ~47 GB) |
+| `/volume1/surveillance/` | Variable | Surveillance Station recordings (auto-recycled) |
+| `/volume1/web/` | Small | Web Station files |
+| `/volume1/web_packages/` | Small | Web Station packages |
+| `/volume1/public/` | Small | Public shared folder |
+| `/volume1/NetBackup/` | Unknown | Legacy NetBackup data |
+| `/volume1/hobbsimage/` | Unknown | Image files |
 
-| Container | Image | Uptime |
-|-----------|-------|--------|
-| home_assistant | homeassistant/home-assistant:latest | 4 days |
-| portainer | portainer/portainer-ce:latest | 4 days |
-| watchtower | containrrr/watchtower:latest | 4 days |
-| oznu-homebridge | oznu/homebridge:latest | 4 days |
-| ubuntu1 | ubuntu:latest | 2 days |
+### Volume 2 — Mac Backup (2.9 TB, 90% used)
 
-### Stopped (4) - Candidates for removal
+| Shared Folder | Est. Size | Contents |
+|---------------|-----------|----------|
+| `/volume2/fujibackup/` | ~2.6 TB | fuji Time Machine — still in use but stale (last backup 2021) |
 
-| Container | Image | Status |
-|-----------|-------|--------|
-| mariadb-reader | mariadb:jammy | Exited 2 years ago |
-| strapi02-strapi-1 | naskio/strapi | Exited 2 years ago |
-| strapi02-db-1 | postgres | Exited 2 years ago |
-| python1 | python:latest | Exited 2 years ago |
+### Volume 3 — Core Data (19 TB, 72% used)
 
-## Critical Data Sizes (Tier 1)
+| Shared Folder | Est. Size | Contents |
+|---------------|-----------|----------|
+| `/volume3/photo/` | ~87 GB | Family photos 1970s–2019 |
+| `/volume3/archive/` | ~77 GB | Documents, financial, ancestry, work history |
+| `/volume3/backup/` | ~3 TB | Time Machine bundles, Windows images, PRIME data |
+| `/volume3/docker/` | ~210 MB | Container configs (HA, Homebridge, acme.sh, Portainer, git) |
+| `/volume3/homes/` | ~78 GB | User home directories |
+| `/volume3/Downloads/` | Variable | Download Station target |
+| `/volume3/CadenceMS365backup/` | Unknown | Active Backup for M365 data |
 
-| Path | Size | Notes |
-|------|------|-------|
-| `/volume3/docker/homeassistant/` | 102 MB | HA config, automations, dashboards |
-| `/volume3/docker/Homebridge/` | 89 MB | Homebridge config and plugins |
-| `/volume3/docker/acme.sh/` | 2.1 MB | Let's Encrypt certs, GoDaddy API creds |
-| `/volume3/docker/portainer/` | 8 MB | Portainer data |
-| `/volume3/docker/git/` | 216 KB | Git bare repositories |
-| **Total Tier 1** | **~210 MB** | Backed up to S3 Standard-IA via Hyper Backup |
+---
 
-## Docker Image Problem
+## Data Classification
 
-Watchtower auto-updates containers but does NOT prune old images.
+| Class | Data | Location | Backup Destination | Priority |
+|-------|------|----------|--------------------|----------|
+| **Irreplaceable** | Family photos (1970s–2019) | `/volume3/photo/` | S3 Standard-IA (Hyper Backup) | Critical |
+| **Irreplaceable** | Family videos | `/volume1/video/familyvideos/` | S3 Standard-IA (Hyper Backup) | Critical |
+| **Irreplaceable** | Archive (docs, financial, ancestry, work) | `/volume3/archive/` | S3 Standard-IA (Hyper Backup) | Critical |
+| **Irreplaceable** | Email PST archives (~23 GB) | `/volume3/archive/email/` (after consolidation) | S3 Standard-IA (Hyper Backup) | Critical |
+| **Important** | Docker configs (HA, certs, git) | `/volume3/docker/` | S3 Standard-IA (Hyper Backup) | High |
+| **Important** | User home directories | `/volume3/homes/` | S3 Standard-IA (Hyper Backup) | High |
+| **Important** | Mac Time Machine — gala (active) | `/volume3/backup/` | S3 Standard-IA (Hyper Backup) | High |
+| **Important** | Mac Time Machine — fuji (stale) | `/volume2/fujibackup/` | Deferred — see Phase 1e | Medium |
+| **Protected elsewhere** | PC data (OneDrive) | OneDrive | Microsoft cloud | N/A |
+| **Protected elsewhere** | Git repos | GitHub + Synology bare repo | GitHub | N/A |
+| **Protected elsewhere** | M365 email/calendar | Active Backup for M365 | Synology local | N/A |
+| **Ephemeral** | Surveillance recordings | `/volume1/surveillance/` | None (auto-recycled) | Low |
+| **Ephemeral** | Downloads | `/volume3/Downloads/` | None | Low |
+| **Redundant** | Old Windows image backups | `/volume3/backup/WindowsImageBackup*` | Delete after verification | Cleanup |
+| **Redundant** | Stale Time Machine bundles (mike) | `/volume3/backup/` | Delete | Cleanup |
+| **Redundant** | Stale Time Machine bundles (Julia) | `/volume3/backup/` | Coordinate with Julia | Cleanup |
 
-**Top 20 images are all 2+ GB each, mostly dangling:**
+---
 
-- ~20 old homeassistant images: ~40 GB wasted
-- Old strapi images: ~4 GB wasted
+## Cleanup Plan — Phase 1
 
-**Fix:** Add `--cleanup` flag to Watchtower or run periodic prune:
+Remove stale and redundant data before expanding offsite backup.
 
-```bash
-docker=/var/packages/ContainerManager/target/usr/bin/docker
-$docker image prune -a --filter "until=168h"  # Remove images older than 7 days
-```
+### 1a. Delete mike-owned stale Time Machine bundles
 
-## Backup Recommendations
+From `/volume3/backup/`:
 
-### Tier 1: Critical (Daily, offsite to S3) ✅ CONFIGURED
-
-- `/volume3/docker/homeassistant/`
-- `/volume3/docker/acme.sh/`
-- `/volume3/docker/git/`
-- `/volume3/docker/docker-compose.yml`
-
-**Estimated S3 Standard-IA cost:** ~$0.003/month (210 MB)
-
-### Tier 2: Important (Weekly, local only)
-
-- `/volume3/docker/Homebridge/`
-- `/volume3/docker/portainer/`
-- Surveillance Station database
-
-### Tier 3: Not needed
-
-- Docker images (re-pull from registries)
-- Old/stopped containers (delete them)
-- Surveillance recordings > 30 days
-
-## Recovery Procedures
-
-### Full NAS Recovery
-
-1. Replace hardware / install DSM
-2. Install packages: ContainerManager, HyperBackup
-3. Open Hyper Backup → create restore task → S3 Storage → `iris-synology-backup` bucket, `IRIS_1` directory
-4. Enter encryption password → restore `/volume3/docker/`
-5. Start containers: `cd /volume3/docker && docker-compose up -d`
-6. Verify: HA dashboard, certs, git push
-
-### Home Assistant Recovery
+| Bundle | Size | Last Used | Status |
+|--------|------|-----------|--------|
+| V3Q1YFVQ41.sparsebundle | 181 GB | Sep 2022 | **DELETE** |
+| walle.sparsebundle | Small | May 2017 | **DELETE** |
 
 ```bash
-# SSH to Synology
 ssh mike@10.1.11.98 -p 2222
-
-# Stop container
-docker=/var/packages/ContainerManager/target/usr/bin/docker
-$docker stop home_assistant
-
-# Restore config from backup
-# (use Hyper Backup restore or manual copy)
-
-# Start container
-$docker start home_assistant
-
-# Verify
-curl http://localhost:8123
+sudo rm -rf /volume3/backup/V3Q1YFVQ41.sparsebundle
+sudo rm -rf /volume3/backup/walle.sparsebundle
 ```
 
-### Certificate Recovery
+- [ ] Deleted V3Q1YFVQ41.sparsebundle (181 GB)
+- [ ] Deleted walle.sparsebundle
+
+### 1b. Coordinate with Julia on stale bundles
+
+From `/volume3/backup/`:
+
+| Bundle | Last Used | Action |
+|--------|-----------|--------|
+| Julia's MacBook Pro.backupbundle | Nov 2021 | Ask Julia |
+| Julia's MacBook Pro.sparsebundle | Sep 2021 | Ask Julia |
+| Julia's Mac mini (2).backupbundle | Aug 2020 | Ask Julia |
+| LOSD-FVFGQ4KPQ6LR.sparsebundle | Sep 2023 | Ask Julia |
+
+- [ ] Asked Julia which bundles to keep
+- [ ] Deleted approved bundles
+
+### 1c. Remove redundant PRIME Windows Image Backups
+
+Three overlapping full-system images of the same PRIME PC:
+
+| Path | Size | Date | Action |
+|------|------|------|--------|
+| `/volume3/backup/WindowsImageBackup/` | 236 GB | Jan 2013 | **KEEP** (newest) |
+| `/volume3/backup/WindowsImageBackup-8-Jul-12/` | 254 GB | Jul 2012 | **DELETE** |
+| `/volume3/backup/PRIME/` | 339 GB | 2011–2013 | **KEEP** (has VMs) |
+
+The user's actual files (including PSTs) are already extracted in `/volume3/archive/PRIME-restore/` (125 GB).
 
 ```bash
-# Restore acme.sh from backup to /volume3/docker/acme.sh/
-# Test renewal
-/volume3/docker/acme.sh/acme.sh --cron --home /volume3/docker/acme.sh
-
-# Re-import to DSM if needed
-# DSM > Security > Certificate > Add > Import
+sudo rm -rf "/volume3/backup/WindowsImageBackup-8-Jul-12/"
 ```
 
-## Current Backup Status
+- [ ] Verified no unique content in Jul 2012 image
+- [ ] Deleted WindowsImageBackup-8-Jul-12 (~254 GB saved)
 
-| System | Status | Last Run | Notes |
-|--------|--------|----------|-------|
-| Hyper Backup → S3 | **ACTIVE** | Feb 20, 2026 | Daily 2 AM, S3 Standard-IA, Smart Recycle, encrypted |
-| Glacier Backup pkg | Unused | Never | Legacy package; not needed — Hyper Backup handles offsite |
-| Active Backup M365 | Unknown | — | Needs verification in DSM UI |
+### 1d. Consolidate PST email archives
 
-### Hyper Backup S3 Task Details
+Create `/volume3/archive/email/` with deduplicated PSTs and an index.
+
+**Known PST files:**
+
+| PST | Size | Source | Content |
+|-----|------|--------|---------|
+| A2014.pst | 8.7 GB | Agilent | Main work email through 2014 |
+| archive.pst | 3.7 GB | Agilent | Older work email archive |
+| migration 2014.pst | 2.2 GB | Agilent | Migration export |
+| archive2013.pst | 534 MB | Agilent | 2013 archive |
+| archive-LIFE.pst | 1.3 GB | PRIME | Life Technologies email |
+| o365-migrate.pst | 125 MB | PRIME | O365 migration export |
+| archive8.pst | 211 MB | PRIME | Archive segment |
+
+```bash
+ssh mike@10.1.11.98 -p 2222
+sudo mkdir -p /volume3/archive/email
+# Copy unique PSTs from their scattered locations:
+# - /volume3/archive/PRIME-restore/Users/Mike/Documents/Outlook Files/
+# - /volume3/backup/PRIME/...
+# Create README.txt index in /volume3/archive/email/
+```
+
+- [ ] Created `/volume3/archive/email/`
+- [ ] Copied all unique PSTs
+- [ ] Created README.txt index
+- [ ] Verified no PSTs left only in backup dirs
+
+### 1e. fuji Time Machine — Deferred
+
+fuji (Julia's Mac) is still in use but hasn't backed up since 2021 (2.6 TB on volume2). Decision on whether to delete the stale bundle and start fresh, or keep it, to be made separately. This is the primary consumer of volume2 (90% full).
+
+**Options:**
+1. Delete bundle, reconfigure Time Machine on fuji → frees volume2
+2. Keep as-is (volume2 stays at 90%)
+3. Move fuji TM target to volume3 (has more headroom)
+
+### Phase 1 Expected Savings
+
+| Action | Space Saved |
+|--------|-------------|
+| mike TM bundles (1a) | ~181 GB |
+| Julia TM bundles (1b) | TBD (pending Julia) |
+| PRIME Jul 2012 image (1c) | ~254 GB |
+| **Minimum total** | **~435 GB on volume3** |
+
+---
+
+## Offsite Backup — Phase 2
+
+### Current Hyper Backup → S3 Task
+
+**Status:** Active since Feb 20, 2026 — currently backing up Docker configs only (~210 MB).
+
+### Expanded Backup Scope
+
+Add all irreplaceable and valuable data to the existing Hyper Backup → S3 task.
+
+**How:** DSM → Hyper Backup → Edit S3 task → Add folders
+
+| Folder | Est. Size | Contents |
+|--------|-----------|----------|
+| `/volume3/docker/` | ~210 MB | Container configs (already included) |
+| `/volume3/photo/` | ~87 GB | Family photos 1970s–2019 |
+| `/volume3/archive/` | ~77 GB | Documents, financial, ancestry, work history, PSTs |
+| `/volume1/video/familyvideos/` | ~47 GB | Family video recordings |
+| `/volume3/homes/` | ~78 GB | User home directories |
+| `/volume3/backup/` | ~500–800 GB | TM (gala), VMs, PRIME data (after cleanup) |
+
+**Estimated total offsite: ~800 GB – 1.1 TB**
+
+### S3 Cost Estimate (after expansion)
+
+| Item | Amount | Monthly Cost |
+|------|--------|-------------|
+| S3 Standard-IA storage | ~1 TB | $10–14 |
+| PUT requests (daily incremental) | ~100/day | $0.15 |
+| **Total** | | **~$10–14/month** |
+
+Previous Docker-only cost was ~$0.02/month. The increase is justified by protecting ~290 GB of irreplaceable data that currently has no offsite copy.
+
+**Note:** The first backup after adding these folders will take significant time (initial upload of ~1 TB). Subsequent daily runs will be incremental and fast.
+
+- [ ] Added `/volume3/photo/` to Hyper Backup task
+- [ ] Added `/volume3/archive/` to Hyper Backup task
+- [ ] Added `/volume1/video/familyvideos/` to Hyper Backup task
+- [ ] Added `/volume3/homes/` to Hyper Backup task
+- [ ] Added `/volume3/backup/` to Hyper Backup task
+- [ ] Initial backup completed
+- [ ] Verified with `aws s3 ls s3://iris-synology-backup/ --recursive --summarize`
+
+---
+
+## Verification — Phase 3
+
+### 3a. Check gala Time Machine
+
+gala's last backup was October 2025 — 4 months ago. Verify on the Mac:
+
+1. System Settings → General → Time Machine → confirm NAS target is configured
+2. Check that the NAS share is mounted / accessible
+3. Trigger a manual backup if needed
+
+- [ ] gala Time Machine verified and running
+
+### 3b. Annual Review Checklist
+
+Perform annually (set calendar reminder for February):
+
+- [ ] Review all shared folders — identify new data, prune stale data
+- [ ] Check volume utilization — flag anything over 85%
+- [ ] Verify Hyper Backup task is running and completing successfully
+- [ ] Spot-check S3 bucket — confirm data is present and recent
+- [ ] Test a restore of at least one folder from S3
+- [ ] Review S3 costs — adjust storage class if costs are unexpected
+- [ ] Check all Time Machine clients — are they still backing up?
+- [ ] Review this document — update sizes, add new data sources
+
+---
+
+## Hyper Backup → S3 Configuration
+
+### Task Details
 
 | Setting | Value |
 |---------|-------|
@@ -161,22 +273,7 @@ curl http://localhost:8123
 | **Compression** | Enabled |
 | **Transfer Encryption** | Enabled (HTTPS) |
 
-**Backed-up folders:** `/volume3/docker/` contents (homeassistant, Homebridge, acme.sh, portainer, git, docker-compose.yml)
-
-**Why S3 Standard-IA instead of Glacier:** Hyper Backup needs to read previous backup data for daily incrementals and integrity checks. Glacier objects require 3-5 hour retrieval, which breaks this. For ~210 MB, Standard-IA costs ~$0.003/month — essentially free. Restores are instant.
-
-## Immediate Actions Needed
-
-1. ~~**Create docker-compose.yml**~~ ✅ Done
-2. ~~**Add `--cleanup` to Watchtower**~~ ✅ Done
-3. ~~**Deploy docker-compose.yml**~~ ✅ Done - 4 containers migrated (Feb 20)
-4. ~~**Clean up stopped containers**~~ ✅ Done - removed 5 old containers
-5. ~~**Configure Hyper Backup → S3**~~ ✅ Done — S3 Standard-IA, daily 2 AM (Feb 20)
-6. **Storage cleanup** on volumes 1 & 2 (at 90%)
-
-## Hyper Backup → S3 Setup Reference
-
-Setup completed Feb 20, 2026. Kept here for rebuild/reconfiguration.
+**Why S3 Standard-IA instead of Glacier:** Hyper Backup needs to read previous backup data for daily incrementals and integrity checks. Glacier objects require 3–5 hour retrieval, which breaks this. Standard-IA provides instant access at a modest storage premium.
 
 ### AWS Resources
 
@@ -221,67 +318,228 @@ Created via CLI (`aws configure` profile on Mac as `mikebackup`):
 }
 ```
 
-### DSM Hyper Backup Task
+---
 
-Configured via DSM UI → Hyper Backup → S3 Storage:
+## Backup Coverage Map
 
-1. Destination: S3 Storage → `s3.us-west-2.amazonaws.com`
-2. Bucket: `iris-synology-backup` → Directory: `IRIS_1`
-3. Storage class: Standard-IA
-4. Folders: `/volume3/docker/` contents
-5. Schedule: Daily 2:00 AM, integrity check monthly
-6. Rotation: Smart Recycle
-7. Client-side encryption: Enabled
+| Data | On NAS | Hyper Backup → S3 | Other Offsite | Status |
+|------|--------|-------------------|---------------|--------|
+| Docker configs (HA, certs, git) | volume3 | **Yes** (since Feb 20) | Git → GitHub | Covered |
+| Family photos (1970s–2019) | volume3 | **Pending** (Phase 2) | None | **Gap** |
+| Family videos | volume1 | **Pending** (Phase 2) | None | **Gap** |
+| Archive (docs, financial, ancestry) | volume3 | **Pending** (Phase 2) | None | **Gap** |
+| Email PSTs (~23 GB) | volume3 | **Pending** (Phase 2, after consolidation) | None | **Gap** |
+| User home dirs | volume3 | **Pending** (Phase 2) | None | **Gap** |
+| gala Time Machine (324 GB) | volume3 | **Pending** (Phase 2) | None | **Gap** |
+| fuji Time Machine (2.6 TB) | volume2 | No (deferred) | None | Deferred |
+| Music library (~10 TB) | volume1 | No (too large) | Rippable from CDs/purchased | Accepted risk |
+| Surveillance recordings | volume1 | No | None | Ephemeral |
+| PC data | — | — | OneDrive | Covered |
+| Git repos | volume3 | Yes (in docker) | GitHub | Covered |
+| M365 backup | volume3 | No | Active Backup for M365 | Covered (local) |
 
-### Cost Estimate
+---
 
-| Item | Amount | Monthly Cost |
-|------|--------|-------------|
-| S3 Standard-IA storage (~210 MB) | 0.21 GB | $0.003 |
-| PUT requests (daily incremental) | ~10/day | $0.015/mo |
-| **Total** | | **~$0.02/month** |
+## Recovery Procedures
 
-Retrieval: instant (Standard-IA, no Glacier delay).
+### Full NAS Recovery (Hardware Failure)
 
-### Restore Procedure
+1. Replace hardware, install DSM 7.x
+2. Install packages: ContainerManager, HyperBackup
+3. Create shared folders to match original volume layout
+4. Open Hyper Backup → create restore task → S3 Storage → `iris-synology-backup` bucket, `IRIS_1` directory
+5. Enter encryption password → restore all folders
+6. Restore Docker: `cd /volume3/docker && docker compose up -d`
+7. Re-import wildcard certificate to DSM (Security → Certificate → Import)
+8. Reconfigure reverse proxy: `ha.conant.com:443` → `localhost:8123`
+9. Verify: HA dashboard, certs, git push, photo access
 
-1. Open DSM → **Hyper Backup** → Select the S3 task
-2. Click **Restore** → Choose version (by date)
-3. Select files/folders to restore
-4. Enter the encryption password
+**RTO:** 8–24 hours (depends on S3 download speed for ~1 TB)
+**RPO:** 24 hours (daily backup)
 
-For a full NAS rebuild: install Hyper Backup first, then create a "restore task" pointing to `iris-synology-backup` bucket, directory `IRIS_1`.
+### Home Assistant Recovery
+
+```bash
+ssh mike@10.1.11.98 -p 2222
+docker=/var/packages/ContainerManager/target/usr/bin/docker
+$docker stop home_assistant
+# Restore config from Hyper Backup or manual copy
+$docker start home_assistant
+curl http://localhost:8123
+```
+
+### Certificate Recovery
+
+```bash
+# Restore acme.sh from backup to /volume3/docker/acme.sh/
+# Test renewal:
+/volume3/docker/acme.sh/acme.sh --cron --home /volume3/docker/acme.sh
+# Re-import to DSM: Security > Certificate > Add > Import
+```
+
+### Photo / Archive / Video Recovery
+
+1. Open DSM → Hyper Backup → select S3 task
+2. Click Restore → choose version (by date)
+3. Select the folder(s) to restore (`photo/`, `archive/`, `video/familyvideos/`)
+4. Enter encryption password
+5. Restore to original location or alternate path
+
+### Time Machine Recovery (gala)
+
+The gala Time Machine bundle is included in the `/volume3/backup/` Hyper Backup scope. To recover:
+
+1. Restore `/volume3/backup/` from Hyper Backup (or the specific `.backupbundle`)
+2. Re-share the backup folder via SMB in DSM
+3. On the Mac: System Settings → Time Machine → re-select the NAS target
+
+### Email PST Recovery
+
+After consolidation (Phase 1d), all PSTs live in `/volume3/archive/email/` with a README.txt index. This folder is backed up as part of `/volume3/archive/` to S3.
+
+To access PSTs: mount the archive share or restore from S3, then open in Outlook or a PST viewer.
+
+---
+
+## Maintenance Schedule
+
+| Cadence | Task | How |
+|---------|------|-----|
+| **Daily** | Hyper Backup runs | Automatic at 2:00 AM |
+| **Daily** | Wildcard cert renewal check | DSM Task Scheduler at 3:00 AM |
+| **Monthly** | Hyper Backup integrity check | Automatic (configured in task) |
+| **Quarterly** | Review S3 costs in AWS Console | Manual — check billing dashboard |
+| **Quarterly** | Check Hyper Backup status in DSM | Manual — verify last success, check logs |
+| **Annually** | Full data audit | See Annual Review Checklist above |
+
+---
+
+## Docker Containers
+
+### Running
+
+| Container | Image | Network |
+|-----------|-------|---------|
+| home_assistant | homeassistant/home-assistant:latest | host |
+| portainer | portainer/portainer-ce:latest | bridge (9000, 9443) |
+| watchtower | containrrr/watchtower:latest | bridge (--cleanup enabled) |
+| oznu-homebridge | oznu/homebridge:latest | host |
+
+### Stopped — Candidates for Removal
+
+| Container | Image | Status |
+|-----------|-------|--------|
+| ubuntu1 | ubuntu:latest | Stopped (utility container) |
+
+**Docker image cleanup:** Watchtower now runs with `--cleanup` flag. Old dangling images are pruned automatically. For manual cleanup:
+
+```bash
+docker=/var/packages/ContainerManager/target/usr/bin/docker
+$docker image prune -a --filter "until=168h"
+```
+
+---
+
+## Backup Packages on NAS
+
+| Package | Status | Purpose |
+|---------|--------|---------|
+| HyperBackup | **Active** | Offsite backup to S3 (daily) |
+| GlacierBackup | Installed (unused) | Legacy — superseded by Hyper Backup → S3 |
+| ActiveBackup-Office365 | Installed | Microsoft 365 backup (needs verification) |
+| HyperBackupVault | Installed | Receive backups from other devices |
+
+---
 
 ## RTO/RPO Targets
 
-| System | RPO (Data Loss) | RTO (Downtime) | Justification |
-|--------|-----------------|----------------|---------------|
-| Home Assistant | 24 hours | 4 hours | Daily backup sufficient; restore from config |
+| System | RPO (Max Data Loss) | RTO (Max Downtime) | Justification |
+|--------|---------------------|--------------------|--------------------|
+| Home Assistant | 24 hours | 4 hours | Daily S3 backup; restore from config |
 | Certificates | 7 days | 1 hour | Re-issue from acme.sh if needed |
+| Photos / Archive | 24 hours | 8–24 hours | Daily S3 backup; large restore |
+| Family Videos | 24 hours | 8–24 hours | Daily S3 backup; large restore |
+| Email PSTs | 24 hours | 8–24 hours | Daily S3 backup (after consolidation) |
 | Git repos | 0 (realtime) | 1 hour | Mirrored to GitHub |
-| Surveillance | 30 days | 24 hours | Recordings are archival, not critical |
-| M365 Backup | Per Active Backup | — | Managed by Synology package |
+| Surveillance | 30 days | 24 hours | Recordings are ephemeral |
+| M365 Backup | Per Active Backup schedule | — | Managed by Synology package |
 
 **Recovery Priority Order:**
 1. Network connectivity (Eero, Synology)
 2. Home Assistant (smart home control)
 3. Certificates (external access)
-4. Surveillance Station
-5. Other services
+4. Photos and irreplaceable data
+5. Surveillance Station
+6. Other services
 
-## Next Steps
+---
 
-~~1. Verify what's currently IN the Glacier backup~~ ✅ Empty — old task deleted
-~~2. Create docker-compose.yml~~ ✅ Created in repo
-~~3. Define RTO/RPO targets~~ ✅ Documented above
-~~4. Deploy docker-compose.yml~~ ✅ Done (Feb 20)
+## Hyper Backup → S3 Setup Reference
 
-**Remaining:**
+Setup completed Feb 20, 2026. Kept here for rebuild/reconfiguration.
 
-1. ~~**Create AWS S3 bucket**~~ ✅ Done — `iris-synology-backup` (us-west-2)
-2. ~~**Create IAM user**~~ ✅ Done — `synology-backup` with scoped S3 policy
-3. ~~**Configure Hyper Backup → S3**~~ ✅ Done — daily 2 AM, Standard-IA, encrypted
-4. ~~**Run first backup**~~ ✅ Running (Feb 20)
-5. **Verify first backup** in DSM + AWS Console
-6. **Storage cleanup** on volumes 1 & 2 (at 90%)
-7. **Delete old root access key** in AWS Console (security hygiene)
+### DSM Hyper Backup Task Setup
+
+1. Destination: S3 Storage → `s3.us-west-2.amazonaws.com`
+2. Bucket: `iris-synology-backup` → Directory: `IRIS_1`
+3. Storage class: Standard-IA
+4. Folders: select all folders listed in Phase 2 scope
+5. Schedule: Daily 2:00 AM, integrity check monthly
+6. Rotation: Smart Recycle
+7. Client-side encryption: Enabled
+
+### Restore Procedure
+
+1. Open DSM → **Hyper Backup** → select the S3 task
+2. Click **Restore** → choose version (by date)
+3. Select files/folders to restore
+4. Enter the encryption password
+
+For a full NAS rebuild: install Hyper Backup first, then create a "restore task" pointing to `iris-synology-backup` bucket, directory `IRIS_1`.
+
+---
+
+## Action Items
+
+### Completed
+
+- [x] Created docker-compose.yml — Feb 20
+- [x] Added `--cleanup` to Watchtower — Feb 20
+- [x] Deployed docker-compose.yml (4 containers migrated) — Feb 20
+- [x] Cleaned up stopped containers (removed 5 old containers) — Feb 20
+- [x] Configured Hyper Backup → S3 (Docker configs, daily 2 AM, encrypted) — Feb 20
+
+### Phase 1 — Cleanup (Do before expanding backup)
+
+- [ ] **1a.** Delete mike's stale TM bundles (V3Q1YFVQ41, walle) — ~181 GB saved
+- [ ] **1b.** Coordinate with Julia on her 4 stale TM bundles
+- [ ] **1c.** Delete WindowsImageBackup-8-Jul-12 — ~254 GB saved
+- [ ] **1d.** Consolidate PSTs into `/volume3/archive/email/` with README index
+- [ ] **1e.** Decide on fuji TM bundle (2.6 TB on volume2) — deferred
+
+### Phase 2 — Expand Offsite Backup
+
+- [ ] Add `/volume3/photo/`, `/volume3/archive/`, `/volume1/video/familyvideos/`, `/volume3/homes/`, `/volume3/backup/` to Hyper Backup S3 task
+- [ ] Run initial full backup (~1 TB upload)
+- [ ] Verify backup with `aws s3 ls s3://iris-synology-backup/ --recursive --summarize`
+
+### Phase 3 — Verify & Maintain
+
+- [ ] Check gala Time Machine — trigger manual backup if needed
+- [ ] Verify first expanded S3 backup
+- [ ] Delete old root access key in AWS Console (security hygiene)
+- [ ] Verify Active Backup for M365 status in DSM
+- [ ] Set annual calendar reminder for data audit (February)
+
+### Verification Commands
+
+```bash
+# Check volume free space after cleanup
+ssh mike@10.1.11.98 -p 2222 "df -h /volume1 /volume2 /volume3"
+
+# Check S3 backup size
+aws s3 ls s3://iris-synology-backup/ --recursive --summarize
+
+# Check Hyper Backup last run (in DSM UI)
+# DSM → Hyper Backup → Task list → check "Last backup time" and status
+```
