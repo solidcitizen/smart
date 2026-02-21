@@ -46,10 +46,10 @@ All Phase 1 items completed — see Completed section below.
 
 - [ ] **HomeIT strategy document** — Map all services (HA, Surveillance Station, Hyper Backup, Active Backup M365, Homebridge, VPN, DNS)
 - [ ] **Wildcard cert auto-deploy to DSM** — Renewal script renews in acme.sh store but doesn't re-import to DSM. Need to configure acme.sh deploy hook with DSM credentials, or script the Synology certificate API
-- [ ] **Docker Compose migration** — Move standalone containers to declarative docker-compose.yml
-- [ ] **Docker image cleanup** — 429 images / 438.8 GB. Prune unused, add `--cleanup` to Watchtower
-- [ ] **Synology maintenance** — ~~DSM 7.3.2 update~~ Done (7.3.2-86009), storage audit (Vol 1 & 2 at 89%), clean up deprecated packages (PHP 7.3/7.4/8.0, Node.js v16)
-- [ ] **Business continuity audit** — Verify Glacier backup coverage, test restore, document RTO/RPO, back up Docker configs
+- [x] **Docker Compose migration** — Created docker-compose.yml with Watchtower --cleanup
+- [ ] **Docker image cleanup** — Run scripts/docker-cleanup.sh to prune (deploy compose first)
+- [ ] **Synology maintenance** — ~~DSM 7.3.2 update~~ Done (7.3.2-86009), storage audit (Vol 1 & 2 at 90%), clean up deprecated packages (PHP 7.3/7.4/8.0, Node.js v16)
+- [x] **Business continuity audit** — Glacier stale (Sep 2023), HyperBackup not configured, RTO/RPO documented in RECOVERY.md
 - [ ] **Synology DSM integration in HA** — NAS health monitoring dashboard
 - [ ] **Surveillance Station in HA** — Camera feeds on same dashboard as locks
 - [ ] **Evaluate Homebridge overlap** — HA has native HomeKit Bridge; Homebridge may be redundant

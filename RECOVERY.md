@@ -136,21 +136,50 @@ curl http://localhost:8123
 # DSM > Security > Certificate > Add > Import
 ```
 
+## Current Backup Status (Audited Feb 20, 2026)
+
+| System | Status | Last Run | Notes |
+|--------|--------|----------|-------|
+| Glacier Backup | **STALE** | Sep 11, 2023 | Task "My Glacier Backup Set 1" exists but inactive |
+| Hyper Backup | **NOT CONFIGURED** | Never | No backup tasks defined |
+| Active Backup M365 | Unknown | — | Needs verification in DSM UI |
+
+**Finding:** No active offsite backup for Docker configs. The 210 MB of critical Tier 1 data is NOT being backed up.
+
 ## Immediate Actions Needed
 
-1. **Configure Hyper Backup task** for `/volume3/docker/` → Glacier
-2. **Clean up stopped containers** (4 containers, 2+ years old)
-3. **Add `--cleanup` to Watchtower** to prevent image bloat
-4. **Create docker-compose.yml** to codify container definitions
-5. **Test restore** from existing Glacier backup (if any)
+1. ~~**Create docker-compose.yml**~~ ✅ Done
+2. ~~**Add `--cleanup` to Watchtower**~~ ✅ Done
+3. ~~**Deploy docker-compose.yml**~~ ✅ Done - 4 containers migrated (Feb 20)
+4. ~~**Clean up stopped containers**~~ ✅ Done - removed 5 old containers
+5. **Configure Hyper Backup task** for `/volume3/docker/` → Glacier (CRITICAL)
 6. **Storage cleanup** on volumes 1 & 2 (at 90%)
+
+## RTO/RPO Targets
+
+| System | RPO (Data Loss) | RTO (Downtime) | Justification |
+|--------|-----------------|----------------|---------------|
+| Home Assistant | 24 hours | 4 hours | Daily backup sufficient; restore from config |
+| Certificates | 7 days | 1 hour | Re-issue from acme.sh if needed |
+| Git repos | 0 (realtime) | 1 hour | Mirrored to GitHub |
+| Surveillance | 30 days | 24 hours | Recordings are archival, not critical |
+| M365 Backup | Per Active Backup | — | Managed by Synology package |
+
+**Recovery Priority Order:**
+1. Network connectivity (Eero, Synology)
+2. Home Assistant (smart home control)
+3. Certificates (external access)
+4. Surveillance Station
+5. Other services
 
 ## Next Steps
 
-After this audit, proceed with:
+~~1. Verify what's currently IN the Glacier backup~~ ✅ Stale since Sep 2023
+~~2. Create docker-compose.yml~~ ✅ Created in repo
+~~3. Define RTO/RPO targets~~ ✅ Documented above
 
-1. Verify what's currently IN the Glacier backup (via DSM UI)
-2. Configure Hyper Backup task if not already done
-3. Create docker-compose.yml for reproducible deployments
-4. Set up backup verification cron job
-5. Define RTO/RPO targets formally
+**Remaining:**
+1. **Configure Hyper Backup → Glacier** (DSM UI: Hyper Backup > Create > S3/Glacier)
+2. **Deploy docker-compose.yml** to Synology
+3. **Run docker-cleanup.sh** to remove old containers/images
+4. **Set up backup verification** cron job (monthly restore test)

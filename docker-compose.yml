@@ -1,0 +1,81 @@
+# Synology Docker Compose - IRIS (DS1520+)
+# Deploy: ssh mike@10.1.11.98 -p 2222
+#         cd /volume3/docker && docker-compose up -d
+#
+# Note: Synology uses /var/packages/ContainerManager/target/usr/bin/docker
+# For compose: docker-compose or docker compose (plugin)
+
+version: "3.8"
+
+services:
+  # ===================
+  # Home Assistant
+  # ===================
+  home_assistant:
+    image: homeassistant/home-assistant:latest
+    container_name: home_assistant
+    restart: always
+    network_mode: host
+    environment:
+      - TZ=America/Los_Angeles
+    volumes:
+      - /volume3/docker/homeassistant:/config
+    # Host networking exposes port 8123 directly
+    # External access via DSM reverse proxy: https://ha.conant.com
+
+  # ===================
+  # Portainer (Docker UI)
+  # ===================
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    ports:
+      - "9000:9000"   # Web UI
+      - "8010:8000"   # Edge agent (remapped from 8000)
+    volumes:
+      - /volume3/docker/portainer:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # ===================
+  # Watchtower (Auto-update)
+  # ===================
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: always
+    environment:
+      - WATCHTOWER_CLEANUP=true          # Prune old images after update
+      - WATCHTOWER_SCHEDULE=0 0 4 * * *  # Run at 4 AM daily
+      - WATCHTOWER_TIMEOUT=60s
+      - TZ=America/Los_Angeles
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # ===================
+  # Homebridge (HomeKit)
+  # ===================
+  homebridge:
+    image: oznu/homebridge:latest
+    container_name: oznu-homebridge
+    restart: always
+    network_mode: host
+    environment:
+      - TZ=America/Los_Angeles
+      - HOMEBRIDGE_CONFIG_UI=1
+      - HOMEBRIDGE_CONFIG_UI_PORT=8581
+    volumes:
+      - /volume3/docker/Homebridge:/homebridge
+    # Host networking for mDNS/Bonjour discovery
+    # Web UI at http://10.1.11.98:8581
+
+
+# ===================
+# STOPPED CONTAINERS (Not in compose - candidates for removal)
+# ===================
+# mariadb-reader    - Exited 2 years ago
+# strapi02-strapi-1 - Exited 2 years ago
+# strapi02-db-1     - Exited 2 years ago
+# python1           - Exited 2 years ago
+#
+# To remove: docker rm mariadb-reader strapi02-strapi-1 strapi02-db-1 python1
