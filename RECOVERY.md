@@ -61,7 +61,7 @@
 | **Irreplaceable** | Family photos (1970s–2019) | `/volume3/photo/` | S3 Standard-IA (Hyper Backup) | Critical |
 | **Irreplaceable** | Family videos | `/volume1/video/familyvideos/` | S3 Standard-IA (Hyper Backup) | Critical |
 | **Irreplaceable** | Archive (docs, financial, ancestry, work) | `/volume3/archive/` | S3 Standard-IA (Hyper Backup) | Critical |
-| **Irreplaceable** | Email PST archives (~23 GB) | `/volume3/archive/email/` (after consolidation) | S3 Standard-IA (Hyper Backup) | Critical |
+| **Irreplaceable** | Email PST archives (~38 GB unique) | `/volume3/archive/mail/` (consolidation target) | S3 Standard-IA (Hyper Backup) | Critical |
 | **Important** | Docker configs (HA, certs, git) | `/volume3/docker/` | S3 Standard-IA (Hyper Backup) | High |
 | **Important** | User home directories | `/volume3/homes/` | S3 Standard-IA (Hyper Backup) | High |
 | **Important** | Mac Time Machine — gala (active) | `/volume3/backup/` | S3 Standard-IA (Hyper Backup) | High |
@@ -134,33 +134,83 @@ sudo rm -rf "/volume3/backup/WindowsImageBackup-8-Jul-12/"
 
 ### 1d. Consolidate PST email archives
 
-Create `/volume3/archive/email/` with deduplicated PSTs and an index.
+8,002 PST files exist on the NAS. ~7,900 are junk (HOBBS backup versioned a 6.1 MB file hourly). The remaining ~100 are real but heavily duplicated across 6 locations. `/volume3/archive/mail/` already exists as a prior partial consolidation — build on it.
 
-**Known PST files:**
+**Source locations (in priority order):**
 
-| PST | Size | Source | Content |
-|-----|------|--------|---------|
+| Location | Contents | Status |
+|----------|----------|--------|
+| `/volume3/archive/mail/` | ~22 unique PSTs, prior consolidation | **Canonical — extend this** |
+| `/volume3/archive/Agilent/AgilentC/` | Agilent work laptop image (3 subdirs with dupes) | Copy unique to mail/ |
+| `/volume3/archive/PRIME-restore/C/Users/mike.CONNET/` | PRIME PC restore (Docs + AppData) | Already in mail/ |
+| `/volume3/backup/mail/` | Pre-2006 ancient email (4 PSTs) | Copy to mail/ |
+| `/volume3/backup/OneDriveMike/` | 3 identical dir trees (Documents, Documents (1), Documents_old) | Check for unique |
+| `/volume3/archive/cadence/` | Mirrors OneDriveMike content | Check for unique |
+| `/volume3/backup/mike/HOBBS/` | ~7,900 versioned copies of 6.1 MB file | **DELETE** (~48 GB junk) |
+
+**Canonical PSTs (in `/volume3/archive/mail/` or to be added):**
+
+| PST | Size | Era | Content |
+|-----|------|-----|---------|
 | A2014.pst | 8.7 GB | Agilent | Main work email through 2014 |
 | archive.pst | 3.7 GB | Agilent | Older work email archive |
 | migration 2014.pst | 2.2 GB | Agilent | Migration export |
 | archive2013.pst | 534 MB | Agilent | 2013 archive |
+| archive-12-Apr-05.pst | 2.0 GB | PRIME | Archive through Apr 2005 |
 | archive-LIFE.pst | 1.3 GB | PRIME | Life Technologies email |
-| o365-migrate.pst | 125 MB | PRIME | O365 migration export |
+| archive-EMC.pst | 1.2 GB | PRIME | EMC-era email |
+| emc-archive2013.pst | 652 MB | PRIME | EMC 2013 archive |
+| archiveLIFE.pst | 377 MB | PRIME | Life Tech (older copy) |
+| mike2007.pst | 282 MB | PRIME | 2007-era email |
+| archive1-jan-07tbd.pst | 450 MB | PRIME | Jan 2007 archive |
 | archive8.pst | 211 MB | PRIME | Archive segment |
+| archive.pst | 137 MB | PRIME | Small archive |
+| o365-migrate.pst | 125 MB | PRIME | O365 migration export |
+| archiveo365.pst | 1.2 GB | PRIME | O365 archive |
+| DeletedItems07.pst | 6.1 GB | PRIME | Deleted items (keep?) |
+| sentitems07.pst | 1.6 GB | PRIME | Sent items (keep?) |
+| GMS-mike@conant.com-*.pst | 6.4 GB | Google | Google Apps Sync export |
+| mike27-Aug-01.pst | 508 MB | Pre-2006 | **Oldest — from backup/mail/** |
+| archive27-Aug-2001.pst | 539 MB | Pre-2006 | **Oldest — from backup/mail/** |
+| archive17-Jul-02.pst | 218 MB | Pre-2006 | **Oldest — from backup/mail/** |
+| google mike at conant.com.pst | 41 MB | Cadence | Google workspace export |
+| conant contacts backup.pst | 45 MB | Recent (Jun 2025) | **Contacts — from OneDriveMike** |
+| old/archive.pst | 835 MB | Cadence | Older archive |
+
+**Estimated unique data: ~38 GB** (plus ~6 GB DeletedItems/SentItems if kept)
+
+**Steps:**
 
 ```bash
 ssh mike@10.1.11.98 -p 2222
-sudo mkdir -p /volume3/archive/email
-# Copy unique PSTs from their scattered locations:
-# - /volume3/archive/PRIME-restore/Users/Mike/Documents/Outlook Files/
-# - /volume3/backup/PRIME/...
-# Create README.txt index in /volume3/archive/email/
+
+# 1. Copy pre-2006 PSTs from backup/mail/ to archive/mail/
+sudo cp /volume3/backup/mail/mike27-Aug-01.pst /volume3/archive/mail/
+sudo cp /volume3/backup/mail/archive27-Aug-2001.pst /volume3/archive/mail/
+sudo cp /volume3/backup/mail/archive17-Jul-02.pst /volume3/archive/mail/
+
+# 2. Copy Agilent PSTs (largest versions) if not already in archive/mail/
+# Source: /volume3/archive/Agilent/AgilentC/Documents/Agilent/Outlook Files/
+
+# 3. Copy unique Cadence/OneDrive PSTs
+# - conant contacts backup.pst (45 MB, Jun 2025) — only in OneDriveMike
+# - google mike at conant.com.pst (41 MB)
+# - old/archive.pst (835 MB)
+
+# 4. Delete HOBBS versioned junk (~48 GB)
+sudo rm -rf "/volume3/backup/mike/HOBBS/Data/C/Users/mike/OneDrive/Documents/Outlook Files/"
+
+# 5. Create README.txt index in /volume3/archive/mail/
 ```
 
-- [ ] Created `/volume3/archive/email/`
-- [ ] Copied all unique PSTs
+- [ ] Verified `/volume3/archive/mail/` has all PSTs from PRIME-restore
+- [ ] Copied pre-2006 PSTs from `/volume3/backup/mail/`
+- [ ] Copied Agilent PSTs (if not already present)
+- [ ] Copied unique Cadence/OneDrive PSTs (contacts backup, google export)
+- [ ] Decided whether to keep DeletedItems07.pst (6.1 GB) and sentitems07.pst (1.6 GB)
+- [ ] Deleted HOBBS versioned copies (~48 GB saved)
 - [ ] Created README.txt index
-- [ ] Verified no PSTs left only in backup dirs
+- [ ] Verified: no unique PSTs remain only in backup/duplicate dirs
 
 ### 1e. fuji Time Machine — Deferred
 
@@ -178,7 +228,8 @@ fuji (Julia's Mac) is still in use but hasn't backed up since 2021 (2.6 TB on vo
 | mike TM bundles (1a) | ~181 GB |
 | Julia TM bundles (1b) | TBD (pending Julia) |
 | PRIME Jul 2012 image (1c) | ~254 GB |
-| **Minimum total** | **~435 GB on volume3** |
+| HOBBS PST junk copies (1d) | ~48 GB |
+| **Minimum total** | **~483 GB on volume3** |
 
 ---
 
@@ -328,7 +379,7 @@ Created via CLI (`aws configure` profile on Mac as `mikebackup`):
 | Family photos (1970s–2019) | volume3 | **Pending** (Phase 2) | None | **Gap** |
 | Family videos | volume1 | **Pending** (Phase 2) | None | **Gap** |
 | Archive (docs, financial, ancestry) | volume3 | **Pending** (Phase 2) | None | **Gap** |
-| Email PSTs (~23 GB) | volume3 | **Pending** (Phase 2, after consolidation) | None | **Gap** |
+| Email PSTs (~38 GB unique) | volume3 | **Pending** (Phase 2, after consolidation) | None | **Gap** |
 | User home dirs | volume3 | **Pending** (Phase 2) | None | **Gap** |
 | gala Time Machine (324 GB) | volume3 | **Pending** (Phase 2) | None | **Gap** |
 | fuji Time Machine (2.6 TB) | volume2 | No (deferred) | None | Deferred |
@@ -395,7 +446,7 @@ The gala Time Machine bundle is included in the `/volume3/backup/` Hyper Backup 
 
 ### Email PST Recovery
 
-After consolidation (Phase 1d), all PSTs live in `/volume3/archive/email/` with a README.txt index. This folder is backed up as part of `/volume3/archive/` to S3.
+After consolidation (Phase 1d), all unique PSTs live in `/volume3/archive/mail/` with a README.txt index. This folder is backed up as part of `/volume3/archive/` to S3. ~38 GB of unique email spanning pre-2001 through 2025.
 
 To access PSTs: mount the archive share or restore from S3, then open in Outlook or a PST viewer.
 
@@ -514,7 +565,7 @@ For a full NAS rebuild: install Hyper Backup first, then create a "restore task"
 - [ ] **1a.** Delete mike's stale TM bundles (V3Q1YFVQ41, walle) — ~181 GB saved
 - [ ] **1b.** Coordinate with Julia on her 4 stale TM bundles
 - [ ] **1c.** Delete WindowsImageBackup-8-Jul-12 — ~254 GB saved
-- [ ] **1d.** Consolidate PSTs into `/volume3/archive/email/` with README index
+- [ ] **1d.** Consolidate PSTs into `/volume3/archive/mail/`, delete ~48 GB HOBBS junk copies
 - [ ] **1e.** Decide on fuji TM bundle (2.6 TB on volume2) — deferred
 
 ### Phase 2 — Expand Offsite Backup
