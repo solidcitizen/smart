@@ -53,7 +53,7 @@
 | `/volume3/docker/acme.sh/` | 2.1 MB | Let's Encrypt certs, GoDaddy API creds |
 | `/volume3/docker/portainer/` | 8 MB | Portainer data |
 | `/volume3/docker/git/` | 216 KB | Git bare repositories |
-| **Total Tier 1** | **~210 MB** | Easily backed up to Glacier |
+| **Total Tier 1** | **~210 MB** | Backed up to S3 Standard-IA via Hyper Backup |
 
 ## Docker Image Problem
 
@@ -73,14 +73,14 @@ $docker image prune -a --filter "until=168h"  # Remove images older than 7 days
 
 ## Backup Recommendations
 
-### Tier 1: Critical (Daily, offsite to Glacier)
+### Tier 1: Critical (Daily, offsite to S3) ✅ CONFIGURED
 
 - `/volume3/docker/homeassistant/`
 - `/volume3/docker/acme.sh/`
 - `/volume3/docker/git/`
-- DSM System Configuration
+- `/volume3/docker/docker-compose.yml`
 
-**Estimated Glacier cost:** ~$0.01/month (210 MB at $1/TB/month)
+**Estimated S3 Standard-IA cost:** ~$0.003/month (210 MB)
 
 ### Tier 2: Important (Weekly, local only)
 
@@ -99,10 +99,10 @@ $docker image prune -a --filter "until=168h"  # Remove images older than 7 days
 ### Full NAS Recovery
 
 1. Replace hardware / install DSM
-2. Install packages: ContainerManager, HyperBackup, GlacierBackup
-3. Restore system config from Hyper Backup
-4. Restore `/volume3/docker/` from Glacier
-5. Start containers: `docker-compose up -d` (if created) or via Portainer
+2. Install packages: ContainerManager, HyperBackup
+3. Open Hyper Backup → create restore task → S3 Storage → `iris-synology-backup` bucket, `IRIS_1` directory
+4. Enter encryption password → restore `/volume3/docker/`
+5. Start containers: `cd /volume3/docker && docker-compose up -d`
 6. Verify: HA dashboard, certs, git push
 
 ### Home Assistant Recovery
@@ -136,15 +136,34 @@ curl http://localhost:8123
 # DSM > Security > Certificate > Add > Import
 ```
 
-## Current Backup Status (Audited Feb 20, 2026)
+## Current Backup Status
 
 | System | Status | Last Run | Notes |
 |--------|--------|----------|-------|
-| Glacier Backup | **STALE** | Sep 11, 2023 | Task "My Glacier Backup Set 1" exists but inactive |
-| Hyper Backup | **NOT CONFIGURED** | Never | No backup tasks defined |
+| Hyper Backup → S3 | **ACTIVE** | Feb 20, 2026 | Daily 2 AM, S3 Standard-IA, Smart Recycle, encrypted |
+| Glacier Backup pkg | Unused | Never | Legacy package; not needed — Hyper Backup handles offsite |
 | Active Backup M365 | Unknown | — | Needs verification in DSM UI |
 
-**Finding:** No active offsite backup for Docker configs. The 210 MB of critical Tier 1 data is NOT being backed up.
+### Hyper Backup S3 Task Details
+
+| Setting | Value |
+|---------|-------|
+| **Destination** | S3 Storage (not Glacier — see note below) |
+| **S3 Bucket** | `iris-synology-backup` (us-west-2) |
+| **Directory** | `IRIS_1` |
+| **Storage Class** | Standard-IA |
+| **IAM User** | `synology-backup` (scoped to bucket only) |
+| **AWS Account** | 846957706554 |
+| **Schedule** | Daily 2:00 AM |
+| **Integrity Check** | Monthly |
+| **Rotation** | Smart Recycle (7 daily, 4 weekly, 6 monthly) |
+| **Client-side Encryption** | Enabled (password required for restore) |
+| **Compression** | Enabled |
+| **Transfer Encryption** | Enabled (HTTPS) |
+
+**Backed-up folders:** `/volume3/docker/` contents (homeassistant, Homebridge, acme.sh, portainer, git, docker-compose.yml)
+
+**Why S3 Standard-IA instead of Glacier:** Hyper Backup needs to read previous backup data for daily incrementals and integrity checks. Glacier objects require 3-5 hour retrieval, which breaks this. For ~210 MB, Standard-IA costs ~$0.003/month — essentially free. Restores are instant.
 
 ## Immediate Actions Needed
 
@@ -152,8 +171,86 @@ curl http://localhost:8123
 2. ~~**Add `--cleanup` to Watchtower**~~ ✅ Done
 3. ~~**Deploy docker-compose.yml**~~ ✅ Done - 4 containers migrated (Feb 20)
 4. ~~**Clean up stopped containers**~~ ✅ Done - removed 5 old containers
-5. **Configure Hyper Backup task** for `/volume3/docker/` → Glacier (CRITICAL)
+5. ~~**Configure Hyper Backup → S3**~~ ✅ Done — S3 Standard-IA, daily 2 AM (Feb 20)
 6. **Storage cleanup** on volumes 1 & 2 (at 90%)
+
+## Hyper Backup → S3 Setup Reference
+
+Setup completed Feb 20, 2026. Kept here for rebuild/reconfiguration.
+
+### AWS Resources
+
+Created via CLI (`aws configure` profile on Mac as `mikebackup`):
+
+- **S3 Bucket:** `iris-synology-backup` (us-west-2, public access blocked, SSE-S3 encryption)
+- **IAM User:** `synology-backup` (programmatic access only)
+- **IAM Policy:** `SynologyHyperBackup` (inline, scoped to bucket)
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ListBuckets",
+      "Effect": "Allow",
+      "Action": "s3:ListAllMyBuckets",
+      "Resource": "*"
+    },
+    {
+      "Sid": "SynologyHyperBackup",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetBucketLocation",
+        "s3:ListBucket",
+        "s3:ListBucketMultipartUploads",
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:AbortMultipartUpload",
+        "s3:ListMultipartUploadParts",
+        "s3:RestoreObject",
+        "s3:GetBucketVersioning",
+        "s3:PutBucketVersioning"
+      ],
+      "Resource": [
+        "arn:aws:s3:::iris-synology-backup",
+        "arn:aws:s3:::iris-synology-backup/*"
+      ]
+    }
+  ]
+}
+```
+
+### DSM Hyper Backup Task
+
+Configured via DSM UI → Hyper Backup → S3 Storage:
+
+1. Destination: S3 Storage → `s3.us-west-2.amazonaws.com`
+2. Bucket: `iris-synology-backup` → Directory: `IRIS_1`
+3. Storage class: Standard-IA
+4. Folders: `/volume3/docker/` contents
+5. Schedule: Daily 2:00 AM, integrity check monthly
+6. Rotation: Smart Recycle
+7. Client-side encryption: Enabled
+
+### Cost Estimate
+
+| Item | Amount | Monthly Cost |
+|------|--------|-------------|
+| S3 Standard-IA storage (~210 MB) | 0.21 GB | $0.003 |
+| PUT requests (daily incremental) | ~10/day | $0.015/mo |
+| **Total** | | **~$0.02/month** |
+
+Retrieval: instant (Standard-IA, no Glacier delay).
+
+### Restore Procedure
+
+1. Open DSM → **Hyper Backup** → Select the S3 task
+2. Click **Restore** → Choose version (by date)
+3. Select files/folders to restore
+4. Enter the encryption password
+
+For a full NAS rebuild: install Hyper Backup first, then create a "restore task" pointing to `iris-synology-backup` bucket, directory `IRIS_1`.
 
 ## RTO/RPO Targets
 
@@ -174,12 +271,17 @@ curl http://localhost:8123
 
 ## Next Steps
 
-~~1. Verify what's currently IN the Glacier backup~~ ✅ Stale since Sep 2023
+~~1. Verify what's currently IN the Glacier backup~~ ✅ Empty — old task deleted
 ~~2. Create docker-compose.yml~~ ✅ Created in repo
 ~~3. Define RTO/RPO targets~~ ✅ Documented above
+~~4. Deploy docker-compose.yml~~ ✅ Done (Feb 20)
 
 **Remaining:**
-1. **Configure Hyper Backup → Glacier** (DSM UI: Hyper Backup > Create > S3/Glacier)
-2. **Deploy docker-compose.yml** to Synology
-3. **Run docker-cleanup.sh** to remove old containers/images
-4. **Set up backup verification** cron job (monthly restore test)
+
+1. ~~**Create AWS S3 bucket**~~ ✅ Done — `iris-synology-backup` (us-west-2)
+2. ~~**Create IAM user**~~ ✅ Done — `synology-backup` with scoped S3 policy
+3. ~~**Configure Hyper Backup → S3**~~ ✅ Done — daily 2 AM, Standard-IA, encrypted
+4. ~~**Run first backup**~~ ✅ Running (Feb 20)
+5. **Verify first backup** in DSM + AWS Console
+6. **Storage cleanup** on volumes 1 & 2 (at 90%)
+7. **Delete old root access key** in AWS Console (security hygiene)
