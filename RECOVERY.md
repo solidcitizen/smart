@@ -13,9 +13,9 @@
 |--------|-------|------|------|-------|-----------------|
 | volume1 | 15 TB | 13 TB | 1.6 TB | 90% | Music, video, surveillance, web |
 | volume2 | 2.9 TB | 2.6 TB | 308 GB | 90% | fuji Time Machine (2.6 TB) |
-| volume3 | 19 TB | 13 TB | 5.2 TB | 72% | Photos, archive, backup, docker, homes |
+| volume3 | 19 TB | 12 TB | 7.1 TB | 62% | Photos, archive, backup, docker, homes |
 
-**Warning:** Volumes 1 & 2 at 90% — cleanup in progress (see Phase 1 below).
+**Warning:** Volumes 1 & 2 at 90%. Volume 3 cleaned up Feb 20 (was 72%, now 62%).
 
 ---
 
@@ -81,37 +81,23 @@
 
 Remove stale and redundant data before expanding offsite backup.
 
-### 1a. Delete mike-owned stale Time Machine bundles
-
-From `/volume3/backup/`:
+### 1a. Delete mike-owned stale Time Machine bundles — DONE
 
 | Bundle | Size | Last Used | Status |
 |--------|------|-----------|--------|
-| V3Q1YFVQ41.sparsebundle | 181 GB | Sep 2022 | **DELETE** |
-| walle.sparsebundle | Small | May 2017 | **DELETE** |
+| V3Q1YFVQ41.sparsebundle | 181 GB | Sep 2022 | Deleted Feb 20 |
+| walle.sparsebundle | 548 GB | May 2017 | Deleted Feb 20 |
 
-```bash
-ssh mike@10.1.11.98 -p 2222
-sudo rm -rf /volume3/backup/V3Q1YFVQ41.sparsebundle
-sudo rm -rf /volume3/backup/walle.sparsebundle
-```
+### 1b. Delete Julia's stale Time Machine bundles — DONE
 
-- [ ] Deleted V3Q1YFVQ41.sparsebundle (181 GB)
-- [ ] Deleted walle.sparsebundle
+| Bundle | Size | Last Used | Status |
+|--------|------|-----------|--------|
+| Julia's MacBook Pro.backupbundle | 904 GB | Nov 2021 | Deleted Feb 20 |
+| Julia's MacBook Pro.sparsebundle | 563 MB | Sep 2021 | Deleted Feb 20 |
+| Julia's Mac mini (2).backupbundle | 482 GB | Aug 2020 | Deleted Feb 20 |
+| LOSD-FVFGQ4KPQ6LR.sparsebundle | 255 GB | Sep 2023 | Deleted Feb 20 |
 
-### 1b. Coordinate with Julia on stale bundles
-
-From `/volume3/backup/`:
-
-| Bundle | Last Used | Action |
-|--------|-----------|--------|
-| Julia's MacBook Pro.backupbundle | Nov 2021 | Ask Julia |
-| Julia's MacBook Pro.sparsebundle | Sep 2021 | Ask Julia |
-| Julia's Mac mini (2).backupbundle | Aug 2020 | Ask Julia |
-| LOSD-FVFGQ4KPQ6LR.sparsebundle | Sep 2023 | Ask Julia |
-
-- [ ] Asked Julia which bundles to keep
-- [ ] Deleted approved bundles
+**Total reclaimed (1a + 1b): ~2.37 TB.** Volume3: 72% → 64%.
 
 ### 1c. Remove redundant PRIME Windows Image Backups
 
@@ -129,8 +115,7 @@ The user's actual files (including PSTs) are already extracted in `/volume3/arch
 sudo rm -rf "/volume3/backup/WindowsImageBackup-8-Jul-12/"
 ```
 
-- [ ] Verified no unique content in Jul 2012 image
-- [ ] Deleted WindowsImageBackup-8-Jul-12 (~254 GB saved)
+- [x] Deleted WindowsImageBackup-8-Jul-12 (~254 GB saved) — Feb 20
 
 ### 1d. Consolidate PST email archives
 
@@ -203,14 +188,14 @@ sudo rm -rf "/volume3/backup/mike/HOBBS/Data/C/Users/mike/OneDrive/Documents/Out
 # 5. Create README.txt index in /volume3/archive/mail/
 ```
 
-- [ ] Verified `/volume3/archive/mail/` has all PSTs from PRIME-restore
-- [ ] Copied pre-2006 PSTs from `/volume3/backup/mail/`
-- [ ] Copied Agilent PSTs (if not already present)
-- [ ] Copied unique Cadence/OneDrive PSTs (contacts backup, google export)
-- [ ] Decided whether to keep DeletedItems07.pst (6.1 GB) and sentitems07.pst (1.6 GB)
-- [ ] Deleted HOBBS versioned copies (~48 GB saved)
-- [ ] Created README.txt index
-- [ ] Verified: no unique PSTs remain only in backup/duplicate dirs
+- [x] Verified `/volume3/archive/mail/` had all PSTs from PRIME-restore — Feb 20
+- [x] Copied pre-2006 PSTs from `/volume3/backup/mail/` (5 files) — Feb 20
+- [x] Copied Agilent PSTs: A2014.pst (8.7 GB), agilent-archive.pst (3.7 GB) — Feb 20
+- [x] Copied unique Cadence/OneDrive PSTs: contacts backup, google export, cadence-archive — Feb 20
+- [ ] Decide whether to keep DeletedItems07.pst (6.1 GB) and sentitems07.pst (1.6 GB)
+- [x] Deleted HOBBS versioned Outlook copies (13 GB) — Feb 20
+- [x] Created README.txt index in `/volume3/archive/mail/` — Feb 20
+- [ ] Verify: no unique PSTs remain only in backup/duplicate dirs (spot-check remaining sources)
 
 ### 1e. fuji Time Machine — Deferred
 
@@ -221,15 +206,15 @@ fuji (Julia's Mac) is still in use but hasn't backed up since 2021 (2.6 TB on vo
 2. Keep as-is (volume2 stays at 90%)
 3. Move fuji TM target to volume3 (has more headroom)
 
-### Phase 1 Expected Savings
+### Phase 1 Savings
 
-| Action | Space Saved |
-|--------|-------------|
-| mike TM bundles (1a) | ~181 GB |
-| Julia TM bundles (1b) | TBD (pending Julia) |
-| PRIME Jul 2012 image (1c) | ~254 GB |
-| HOBBS PST junk copies (1d) | ~48 GB |
-| **Minimum total** | **~483 GB on volume3** |
+| Action | Space Saved | Status |
+|--------|-------------|--------|
+| mike TM bundles (1a) | **729 GB** | Done |
+| Julia TM bundles (1b) | **1.64 TB** | Done |
+| PRIME Jul 2012 image (1c) | **254 GB** | Done |
+| HOBBS PST junk copies (1d) | **13 GB** | Done |
+| **Total reclaimed** | **~2.63 TB** | **Volume3: 72% → 62%** |
 
 ---
 
@@ -562,10 +547,10 @@ For a full NAS rebuild: install Hyper Backup first, then create a "restore task"
 
 ### Phase 1 — Cleanup (Do before expanding backup)
 
-- [ ] **1a.** Delete mike's stale TM bundles (V3Q1YFVQ41, walle) — ~181 GB saved
-- [ ] **1b.** Coordinate with Julia on her 4 stale TM bundles
-- [ ] **1c.** Delete WindowsImageBackup-8-Jul-12 — ~254 GB saved
-- [ ] **1d.** Consolidate PSTs into `/volume3/archive/mail/`, delete ~48 GB HOBBS junk copies
+- [x] **1a.** Delete mike's stale TM bundles (V3Q1YFVQ41, walle) — 729 GB reclaimed — Feb 20
+- [x] **1b.** Delete Julia's stale TM bundles (4 bundles) — 1.64 TB reclaimed — Feb 20
+- [x] **1c.** Delete WindowsImageBackup-8-Jul-12 — 254 GB reclaimed — Feb 20
+- [x] **1d.** Consolidate PSTs into `/volume3/archive/mail/` (32 PSTs, 44 GB), HOBBS junk deleted — Feb 20
 - [ ] **1e.** Decide on fuji TM bundle (2.6 TB on volume2) — deferred
 
 ### Phase 2 — Expand Offsite Backup
