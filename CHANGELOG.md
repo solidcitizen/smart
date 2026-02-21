@@ -8,6 +8,18 @@ Dated record of significant system configuration changes. Every SSH config chang
 
 ## 2026-02-21
 
+### Backup & Storage
+- Expanded Hyper Backup → S3 task to cover all irreplaceable data (was Docker configs only):
+  - Added `/volume3/photo/` (~113 GB — family photos 1970s–2019)
+  - Added `/volume3/archive/` (~1.2 TB — documents, financial, ancestry, work history, PSTs)
+  - Added `/volume1/video/familyvideos/` (~47 GB — family videos)
+  - Added `/volume3/homes/` (~78 GB — user home directories)
+  - Added `/volume3/backup/` (Time Machine gala, VMs, PRIME data)
+- **Total offsite backup scope: ~1.5+ TB** (up from ~210 MB Docker-only)
+- Updated S3 cost estimate: ~$15–22/month (was ~$0.02/month)
+- Corrected data sizes from SSH audit: archive is 1.2 TB (was estimated 77 GB), photos 113 GB (was 87 GB)
+- Volume3 now at 55% used (was reported as 62%)
+
 ### Documentation
 - Created ITSM operations framework:
   - `docs/services.md` — Service registry & CMDB (hardware, network, all services, Z-Wave devices, DSM packages)

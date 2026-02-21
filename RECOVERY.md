@@ -1,7 +1,7 @@
 # IRIS NAS — Data Management & Backup Guide
 
 **NAS:** Synology DS1520+ (IRIS)
-**Last Audit:** February 20, 2026
+**Last Audit:** February 21, 2026
 
 > See also: [Service Registry](docs/services.md) for hardware, services, and current config | [Runbook](docs/runbook.md) for operational procedures | [CHANGELOG](CHANGELOG.md) for change history
 
@@ -28,12 +28,12 @@
 |---------------|-----------|----------|
 | `/volume2/fujibackup/` | ~2.6 TB | fuji Time Machine — still in use but stale (last backup 2021) |
 
-### Volume 3 — Core Data (19 TB, 62% used after Phase 1 cleanup)
+### Volume 3 — Core Data (19 TB, 55% used after Phase 1 cleanup)
 
 | Shared Folder | Est. Size | Contents |
 |---------------|-----------|----------|
-| `/volume3/photo/` | ~87 GB | Family photos 1970s–2019 |
-| `/volume3/archive/` | ~77 GB | Documents, financial, ancestry, work history |
+| `/volume3/photo/` | ~113 GB | Family photos 1970s–2019 |
+| `/volume3/archive/` | ~1.2 TB | Documents, financial, ancestry, work history |
 | `/volume3/backup/` | ~3 TB | Time Machine bundles, Windows images, PRIME data |
 | `/volume3/docker/` | ~210 MB | Container configs (HA, Homebridge, acme.sh, Portainer, git) |
 | `/volume3/homes/` | ~78 GB | User home directories |
@@ -46,9 +46,9 @@
 
 | Class | Data | Location | Backup Destination | Priority |
 |-------|------|----------|--------------------|----------|
-| **Irreplaceable** | Family photos (1970s–2019) | `/volume3/photo/` | S3 Standard-IA (Hyper Backup) | Critical |
-| **Irreplaceable** | Family videos | `/volume1/video/familyvideos/` | S3 Standard-IA (Hyper Backup) | Critical |
-| **Irreplaceable** | Archive (docs, financial, ancestry, work) | `/volume3/archive/` | S3 Standard-IA (Hyper Backup) | Critical |
+| **Irreplaceable** | Family photos (~113 GB, 1970s–2019) | `/volume3/photo/` | S3 Standard-IA (Hyper Backup) | Critical |
+| **Irreplaceable** | Family videos (~47 GB) | `/volume1/video/familyvideos/` | S3 Standard-IA (Hyper Backup) | Critical |
+| **Irreplaceable** | Archive (~1.2 TB — docs, financial, ancestry, work) | `/volume3/archive/` | S3 Standard-IA (Hyper Backup) | Critical |
 | **Irreplaceable** | Email PST archives (~38 GB unique) | `/volume3/archive/mail/` (consolidation target) | S3 Standard-IA (Hyper Backup) | Critical |
 | **Important** | Docker configs (HA, certs, git) | `/volume3/docker/` | S3 Standard-IA (Hyper Backup) | High |
 | **Important** | User home directories | `/volume3/homes/` | S3 Standard-IA (Hyper Backup) | High |
@@ -85,7 +85,7 @@ Remove stale and redundant data before expanding offsite backup.
 | Julia's Mac mini (2).backupbundle | 482 GB | Aug 2020 | Deleted Feb 20 |
 | LOSD-FVFGQ4KPQ6LR.sparsebundle | 255 GB | Sep 2023 | Deleted Feb 20 |
 
-**Total reclaimed (1a + 1b): ~2.37 TB.** Volume3: 72% → 64%.
+**Total reclaimed (1a + 1b): ~2.37 TB.** Volume3: 72% → 64% (further reduced to 55% after all cleanup).
 
 ### 1c. Remove redundant PRIME Windows Image Backups
 
@@ -202,7 +202,7 @@ fuji (Julia's Mac) is still in use but hasn't backed up since 2021 (2.6 TB on vo
 | Julia TM bundles (1b) | **1.64 TB** | Done |
 | PRIME Jul 2012 image (1c) | **254 GB** | Done |
 | HOBBS PST junk copies (1d) | **13 GB** | Done |
-| **Total reclaimed** | **~2.63 TB** | **Volume3: 72% → 62%** |
+| **Total reclaimed** | **~2.63 TB** | **Volume3: 72% → 55%** |
 
 ---
 
@@ -210,7 +210,7 @@ fuji (Julia's Mac) is still in use but hasn't backed up since 2021 (2.6 TB on vo
 
 ### Current Hyper Backup → S3 Task
 
-**Status:** Active since Feb 20, 2026 — currently backing up Docker configs only (~210 MB).
+**Status:** Expanded Feb 21, 2026 — backing up all irreplaceable and valuable data (~1.5+ TB). Initial Docker-only task created Feb 20.
 
 ### Expanded Backup Scope
 
@@ -218,34 +218,34 @@ Add all irreplaceable and valuable data to the existing Hyper Backup → S3 task
 
 **How:** DSM → Hyper Backup → Edit S3 task → Add folders
 
-| Folder | Est. Size | Contents |
-|--------|-----------|----------|
-| `/volume3/docker/` | ~210 MB | Container configs (already included) |
-| `/volume3/photo/` | ~87 GB | Family photos 1970s–2019 |
-| `/volume3/archive/` | ~77 GB | Documents, financial, ancestry, work history, PSTs |
-| `/volume1/video/familyvideos/` | ~47 GB | Family video recordings |
-| `/volume3/homes/` | ~78 GB | User home directories |
-| `/volume3/backup/` | ~500–800 GB | TM (gala), VMs, PRIME data (after cleanup) |
+| Folder | Est. Size | Contents | Status |
+|--------|-----------|----------|--------|
+| `/volume3/docker/` | ~210 MB | Container configs | Included since Feb 20 |
+| `/volume3/photo/` | ~113 GB | Family photos 1970s–2019 | **Added Feb 21** |
+| `/volume3/archive/` | ~1.2 TB | Documents, financial, ancestry, work history, PSTs | **Added Feb 21** |
+| `/volume1/video/familyvideos/` | ~47 GB | Family video recordings | **Added Feb 21** |
+| `/volume3/homes/` | ~78 GB | User home directories | **Added Feb 21** |
+| `/volume3/backup/` | Large (TM gala, VMs, PRIME data) | TM (gala), VMs, PRIME data (after cleanup) | **Added Feb 21** |
 
-**Estimated total offsite: ~800 GB – 1.1 TB**
+**Estimated total offsite: ~1.5+ TB** (archive is 1.2 TB, significantly larger than initial 77 GB estimate)
 
 ### S3 Cost Estimate (after expansion)
 
 | Item | Amount | Monthly Cost |
 |------|--------|-------------|
-| S3 Standard-IA storage | ~1 TB | $10–14 |
+| S3 Standard-IA storage | ~1.5+ TB | $15–22 |
 | PUT requests (daily incremental) | ~100/day | $0.15 |
-| **Total** | | **~$10–14/month** |
+| **Total** | | **~$15–22/month** |
 
-Previous Docker-only cost was ~$0.02/month. The increase is justified by protecting ~290 GB of irreplaceable data that currently has no offsite copy.
+Previous Docker-only cost was ~$0.02/month. The increase is justified by protecting irreplaceable data (photos, archive, videos, email) that previously had no offsite copy. Archive alone is 1.2 TB (larger than initial 77 GB estimate due to full contents including PRIME-restore, Agilent images, etc.).
 
 **Note:** The first backup after adding these folders will take significant time (initial upload of ~1 TB). Subsequent daily runs will be incremental and fast.
 
-- [ ] Added `/volume3/photo/` to Hyper Backup task
-- [ ] Added `/volume3/archive/` to Hyper Backup task
-- [ ] Added `/volume1/video/familyvideos/` to Hyper Backup task
-- [ ] Added `/volume3/homes/` to Hyper Backup task
-- [ ] Added `/volume3/backup/` to Hyper Backup task
+- [x] Added `/volume3/photo/` to Hyper Backup task — Feb 21
+- [x] Added `/volume3/archive/` to Hyper Backup task — Feb 21
+- [x] Added `/volume1/video/familyvideos/` to Hyper Backup task — Feb 21
+- [x] Added `/volume3/homes/` to Hyper Backup task — Feb 21
+- [x] Added `/volume3/backup/` to Hyper Backup task — Feb 21
 - [ ] Initial backup completed
 - [ ] Verified with `aws s3 ls s3://iris-synology-backup/ --recursive --summarize`
 
@@ -340,12 +340,12 @@ Created via CLI (`aws configure` profile on Mac as `mikebackup`):
 | Data | On NAS | Hyper Backup → S3 | Other Offsite | Status |
 |------|--------|-------------------|---------------|--------|
 | Docker configs (HA, certs, git) | volume3 | **Yes** (since Feb 20) | Git → GitHub | Covered |
-| Family photos (1970s–2019) | volume3 | **Pending** (Phase 2) | None | **Gap** |
-| Family videos | volume1 | **Pending** (Phase 2) | None | **Gap** |
-| Archive (docs, financial, ancestry) | volume3 | **Pending** (Phase 2) | None | **Gap** |
-| Email PSTs (~38 GB unique) | volume3 | **Pending** (Phase 2, after consolidation) | None | **Gap** |
-| User home dirs | volume3 | **Pending** (Phase 2) | None | **Gap** |
-| gala Time Machine (324 GB) | volume3 | **Pending** (Phase 2) | None | **Gap** |
+| Family photos (1970s–2019) | volume3 | **Yes** (since Feb 21) | None | Covered |
+| Family videos | volume1 | **Yes** (since Feb 21) | None | Covered |
+| Archive (docs, financial, ancestry) | volume3 | **Yes** (since Feb 21) | None | Covered |
+| Email PSTs (~38 GB unique) | volume3 | **Yes** (since Feb 21, within archive/) | None | Covered |
+| User home dirs | volume3 | **Yes** (since Feb 21) | None | Covered |
+| gala Time Machine (324 GB) | volume3 | **Yes** (since Feb 21, within backup/) | None | Covered |
 | fuji Time Machine (2.6 TB) | volume2 | No (deferred) | None | Deferred |
 | Music library (~10 TB) | volume1 | No (too large) | Rippable from CDs/purchased | Accepted risk |
 | Surveillance recordings | volume1 | No | None | Ephemeral |
@@ -369,7 +369,7 @@ Created via CLI (`aws configure` profile on Mac as `mikebackup`):
 8. Reconfigure reverse proxy: `ha.conant.com:443` → `localhost:8123`
 9. Verify: HA dashboard, certs, git push, photo access
 
-**RTO:** 8–24 hours (depends on S3 download speed for ~1 TB)
+**RTO:** 8–48 hours (depends on S3 download speed for ~1.5+ TB)
 **RPO:** 24 hours (daily backup)
 
 ### Home Assistant Recovery
@@ -447,7 +447,7 @@ To access PSTs: mount the archive share or restore from S3, then open in Outlook
 
 ## Hyper Backup → S3 Setup Reference
 
-Setup completed Feb 20, 2026. Kept here for rebuild/reconfiguration.
+Initial setup Feb 20, 2026. Expanded to full scope Feb 21, 2026. Kept here for rebuild/reconfiguration.
 
 ### DSM Hyper Backup Task Setup
 
@@ -480,8 +480,8 @@ For a full NAS rebuild: install Hyper Backup first, then create a "restore task"
 - [ ] Verify: no unique PSTs remain only in backup/duplicate dirs
 
 ### Phase 2 — Expand Offsite Backup
-- [ ] Add `/volume3/photo/`, `/volume3/archive/`, `/volume1/video/familyvideos/`, `/volume3/homes/`, `/volume3/backup/` to Hyper Backup S3 task
-- [ ] Run initial full backup (~1 TB upload)
+- [x] Add `/volume3/photo/`, `/volume3/archive/`, `/volume1/video/familyvideos/`, `/volume3/homes/`, `/volume3/backup/` to Hyper Backup S3 task — Feb 21
+- [ ] Run initial full backup (~1.5+ TB upload)
 - [ ] Verify backup with `aws s3 ls s3://iris-synology-backup/ --recursive --summarize`
 
 ### Phase 3 — Verify & Maintain

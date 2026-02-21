@@ -1,6 +1,6 @@
 # Service Registry & CMDB
 
-**Last updated:** 2026-02-20
+**Last updated:** 2026-02-21
 
 Single source of truth for all systems, services, and their current configuration.
 
@@ -72,7 +72,7 @@ Single source of truth for all systems, services, and their current configuratio
 
 | Service | Platform | Status | Schedule | Health Check | Runbook |
 |---------|----------|--------|----------|--------------|---------|
-| Hyper Backup → S3 | DSM | Active | Daily 2 AM | DSM → Hyper Backup → task status | [Backup verification](runbook.md#hyper-backup-verification) |
+| Hyper Backup → S3 | DSM | Active (~1.5+ TB scope) | Daily 2 AM | DSM → Hyper Backup → task status | [Backup verification](runbook.md#hyper-backup-verification) |
 | Active Backup for M365 | DSM | Active | Continuous | DSM → Active Backup → task status | [M365 verification](runbook.md#active-backup-for-m365-verification) |
 | Surveillance Station | DSM | Active | Continuous | DSM → Surveillance Station | Needs documentation |
 | Wildcard Cert Renewal | acme.sh + DSM cron | Active | Daily 3 AM check | Cert expiry date in DSM | [Cert re-import](runbook.md#certificate-re-import-to-dsm) |
@@ -138,9 +138,9 @@ All locks on **RBoy Universal Enhanced Z-Wave Lock** driver (`c8d6a4ae`).
 |--------|-------|------|------|-------|------------------|
 | volume1 | 15 TB | 13 TB | 1.6 TB | 90% | Music, video, surveillance, web |
 | volume2 | 2.9 TB | 2.6 TB | 308 GB | 90% | fuji Time Machine (2.6 TB) |
-| volume3 | 19 TB | 12 TB | 7.1 TB | 62% | Photos, archive, backup, docker, homes |
+| volume3 | 19 TB | 9.9 TB | 8.3 TB | 55% | Photos, archive, backup, docker, homes |
 
-**Warning:** Volumes 1 & 2 at 90%. Volume 3 cleaned up Feb 20 (was 72%, now 62%).
+**Warning:** Volumes 1 & 2 at 90%. Volume 3 cleaned up Feb 20 (was 72%, now 55%).
 
 > Full data inventory and classification in [RECOVERY.md](../RECOVERY.md#data-inventory).
 
