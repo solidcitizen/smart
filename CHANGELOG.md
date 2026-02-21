@@ -6,6 +6,17 @@ Dated record of significant system configuration changes. Every SSH config chang
 
 ---
 
+## 2026-02-21
+
+### Documentation
+- Created ITSM operations framework:
+  - `docs/services.md` — Service registry & CMDB (hardware, network, all services, Z-Wave devices, DSM packages)
+  - `docs/runbook.md` — Operational procedures, health checks, incident response, quarterly/annual audit checklists
+  - `CHANGELOG.md` — Configuration change log with backfilled entries
+- Deduplicated RECOVERY.md: removed Docker, maintenance, and package sections now covered by services.md/runbook.md; added cross-references
+- Added service onboarding backlog to TODO.md (12 undocumented services)
+- Added related documentation index to README.md
+
 ## 2026-02-20
 
 ### Backup & Storage
