@@ -73,6 +73,7 @@ Single source of truth for all systems, services, and their current configuratio
 | Service | Platform | Status | Schedule | Health Check | Runbook |
 |---------|----------|--------|----------|--------------|---------|
 | Hyper Backup → S3 | DSM | Active (~1.5+ TB scope) | Daily 2 AM | DSM → Hyper Backup → task status | [Backup verification](runbook.md#hyper-backup-verification) |
+| Glacier Backup | DSM | Active (~160 GB scope) | Manual/monthly | DSM → Glacier Backup → task status | Cold archive for family media |
 | Active Backup for M365 | DSM | Active | Continuous | DSM → Active Backup → task status | [M365 verification](runbook.md#active-backup-for-m365-verification) |
 | Surveillance Station | DSM | Active | Continuous | DSM → Surveillance Station | Needs documentation |
 | Wildcard Cert Renewal | acme.sh + DSM cron | Active | Daily 3 AM check | Cert expiry date in DSM | [Cert re-import](runbook.md#certificate-re-import-to-dsm) |

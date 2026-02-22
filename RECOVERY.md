@@ -337,21 +337,21 @@ Created via CLI (`aws configure` profile on Mac as `mikebackup`):
 
 ## Backup Coverage Map
 
-| Data | On NAS | Hyper Backup → S3 | Other Offsite | Status |
-|------|--------|-------------------|---------------|--------|
-| Docker configs (HA, certs, git) | volume3 | **Yes** (since Feb 20) | Git → GitHub | Covered |
-| Family photos (1970s–2019) | volume3 | **Yes** (since Feb 21) | None | Covered |
-| Family videos | volume1 | **Yes** (since Feb 21) | None | Covered |
-| Archive (docs, financial, ancestry) | volume3 | **Yes** (since Feb 21) | None | Covered |
-| Email PSTs (~38 GB unique) | volume3 | **Yes** (since Feb 21, within archive/) | None | Covered |
-| User home dirs | volume3 | **Yes** (since Feb 21) | None | Covered |
-| gala Time Machine (324 GB) | volume3 | **Yes** (since Feb 21, within backup/) | None | Covered |
-| fuji Time Machine (2.6 TB) | volume2 | No (deferred) | None | Deferred |
-| Music library (~10 TB) | volume1 | No (too large) | Rippable from CDs/purchased | Accepted risk |
-| Surveillance recordings | volume1 | No | None | Ephemeral |
-| PC data | — | — | OneDrive | Covered |
-| Git repos | volume3 | Yes (in docker) | GitHub | Covered |
-| Cadence Group M365 | volume3 | No | Active Backup for M365 (continuous, local) | Covered — retention beyond M365's 30-day window |
+| Data | On NAS | Hyper Backup → S3 | Glacier Deep Archive | Other Offsite | Status |
+|------|--------|-------------------|---------------------|---------------|--------|
+| Docker configs (HA, certs, git) | volume3 | **Yes** (since Feb 20) | No | Git → GitHub | Covered |
+| Family photos (1970s–2019) | volume3 | **Yes** (since Feb 21) | **Yes** (Feb 22) | None | Covered (2 tiers) |
+| Family videos | volume1 | **Yes** (since Feb 21) | **Yes** (Feb 22) | None | Covered (2 tiers) |
+| Archive (docs, financial, ancestry) | volume3 | **Yes** (since Feb 21) | No | None | Covered |
+| Email PSTs (~38 GB unique) | volume3 | **Yes** (since Feb 21, within archive/) | No | None | Covered |
+| User home dirs | volume3 | **Yes** (since Feb 21) | No | None | Covered |
+| gala Time Machine (324 GB) | volume3 | **Yes** (since Feb 21, within backup/) | No | None | Covered |
+| fuji Time Machine (2.6 TB) | volume2 | No (deferred) | No | None | Deferred |
+| Music library (~10 TB) | volume1 | No (too large) | No | Rippable from CDs/purchased | Accepted risk |
+| Surveillance recordings | volume1 | No | No | None | Ephemeral |
+| PC data | — | — | — | OneDrive | Covered |
+| Git repos | volume3 | Yes (in docker) | No | GitHub | Covered |
+| Cadence Group M365 | volume3 | No | No | Active Backup for M365 (continuous, local) | Covered |
 
 ---
 
@@ -442,6 +442,49 @@ To access PSTs: mount the archive share or restore from S3, then open in Outlook
 4. Photos and irreplaceable data
 5. Surveillance Station
 6. Other services
+
+---
+
+## Glacier Backup (Cold Archive) — Phase 2b
+
+### Task Details
+
+| Setting | Value |
+|---------|-------|
+| **Destination** | AWS S3 Glacier Deep Archive |
+| **Purpose** | Long-term cold storage for irreplaceable family media |
+| **Schedule** | Manual or monthly (rarely changes) |
+
+### Scope
+
+| Folder | Volume | Est. Size | Contents |
+|--------|--------|-----------|----------|
+| `/volume1/video/familyvideos/` | volume1 | ~47 GB | Irreplaceable family video recordings |
+| `/volume3/photo/` | volume3 | ~113 GB | Family photos 1970s–2019 |
+| **Total** | | **~160 GB** | |
+
+### Why Glacier for This Data
+
+- **Rarely accessed** — family media is viewed occasionally, not daily
+- **Must be preserved forever** — irreplaceable memories
+- **Cost optimization** — Glacier Deep Archive is ~$1/TB/month vs $12.50/TB for Standard-IA
+- **Already in S3 Standard-IA** — this provides a second-tier cold copy for disaster recovery
+
+### Glacier vs S3 Standard-IA
+
+| Feature | S3 Standard-IA (Hyper Backup) | Glacier Deep Archive |
+|---------|-------------------------------|---------------------|
+| Storage cost | $12.50/TB/month | $0.99/TB/month |
+| Retrieval time | Instant | 12–48 hours |
+| Use case | Active backups, daily incrementals | Cold archive, disaster recovery |
+| Min storage | 30 days | 180 days |
+
+**Note:** The same data is in both tiers. S3 Standard-IA provides fast restore for daily operations; Glacier provides ultra-low-cost long-term preservation.
+
+- [x] Selected folders for Glacier backup — Feb 22
+- [ ] Create Glacier Backup task in DSM
+- [ ] Initial upload completed
+- [ ] Verify with AWS Console
 
 ---
 
