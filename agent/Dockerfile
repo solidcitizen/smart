@@ -1,12 +1,8 @@
 # HomeIT Agent Docker Image
-FROM node:20-slim
+FROM node:20-alpine
 
-# Install SSH client for remote commands
-RUN apt-get update && apt-get install -y \
-    openssh-client \
-    openssl \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Alpine already includes curl, openssl
+# No apt-get needed - avoids DNS issues during build
 
 # Create app directory
 WORKDIR /app
@@ -24,11 +20,8 @@ COPY . .
 RUN npm run build
 
 # Create non-root user
-RUN useradd -m -s /bin/bash homeit
+RUN adduser -D -s /bin/sh homeit
 USER homeit
 
-# Default command runs the scheduler
-CMD ["node", "dist/index.js"]
-
-# Alternative: run CLI mode
-# CMD ["npm", "run", "chat"]
+# Default command runs the CLI (scheduler will be added later)
+CMD ["node", "dist/cli.js"]
