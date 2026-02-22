@@ -4,10 +4,7 @@ import { createAgent } from "./index.js";
 
 const agent = createAgent();
 
-interface Message {
-  role: "user" | "assistant";
-  content: string | Anthropic.ContentBlock[];
-}
+type Message = Anthropic.MessageParam;
 
 const conversationHistory: Message[] = [];
 

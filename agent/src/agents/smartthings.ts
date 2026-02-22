@@ -95,10 +95,10 @@ export const smartthingsAgent = {
       this.getDeviceStatus(deviceId),
     ]);
 
-    const battery =
-      (status?.components as Record<string, unknown>)?.main?.battery?.battery?.value ?? null;
-    const lockState =
-      (status?.components as Record<string, unknown>)?.main?.lock?.lock?.value ?? "unknown";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const components = (status?.components as any) ?? {};
+    const battery = components?.main?.battery?.battery?.value ?? null;
+    const lockState = components?.main?.lock?.lock?.value ?? "unknown";
 
     return {
       id: deviceId,
