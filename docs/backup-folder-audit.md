@@ -18,7 +18,7 @@ The `/volume3/backup/` folder contains 46 top-level items accumulated over 15+ y
 
 ### Key Findings (Updated with Full Sizes)
 
-1. **mike/** (2.3 TB) — Largest folder! Contains HOBBS and FUJI-onedrivestuff. HOBBS likely has massive duplicates
+1. **mike/** (2.3 TB) — **CONFIRMED**: Windows File History backup from HOBBS PC (~2.2 TB). Last updated Nov 2024. Backs up C:\Users\mike\ including OneDrive files
 2. **octagon** (1.3 TB) contains massive Outlook PST files that overlap with `/volume3/archive/mail/`
 3. **OneDriveMike** (653 GB) — Much larger than expected. Has 3 identical "Apps" folders + 36 GB video + 19 GB snagit
 4. **#recycle** (204 GB) — Deleted files not purged. Can be emptied immediately
@@ -26,6 +26,60 @@ The `/volume3/backup/` folder contains 46 top-level items accumulated over 15+ y
 6. **imazing** (164 GB) — iPhone backups, larger than expected
 7. **synoreport** (76 GB) — Synology reports, unexpectedly large
 8. **Dank** (28 GB) is 2011 photos that should move to `/volume3/photo/`
+
+---
+
+## Complete Folder Data
+
+| Folder | Size | Earliest | Latest | Movies | Pictures | Documents | Recommendation |
+|--------|------|----------|--------|--------|----------|-----------|----------------|
+| mike/ | 2.3 TB | 2021 | 2024-11 | * | * | * | **KEEP** — Active HOBBS backup |
+| octagon/ | 1.3 TB | 2012-11 | 2014-07 | 0 | 0 | ~20 GB PST | **DELETE** — Retired OCTET PC |
+| OneDriveMike/ | 653 GB | 2020 | 2024 | 36 GB | * | * | **DEDUPE** — Delete Apps dupes |
+| PRIME/ | 339 GB | 2011 | 2013 | * | * | * | Keep (has VMs) |
+| gala.sparsebundle | 324 GB | 2025 | 2025 | * | * | * | **KEEP** — Active Time Machine |
+| juli/ | 242 GB | 2012 | 2024 | * | 180 GB | * | **AUDIT** — iPhoto2.zip |
+| WindowsImageBackup/ | 236 GB | 2013-01 | 2013-01 | 0 | 0 | 0 | **REVIEW** — System image |
+| #recycle/ | 204 GB | * | * | * | * | * | **PURGE** — Empty immediately |
+| hobbs/ | 169 GB | 2022-05 | 2022-12 | * | * | * | **DELETE** — Windows.old |
+| imazing/ | 164 GB | 2023 | 2024 | * | * | * | Keep (iPhone backups) |
+| synoreport/ | 76 GB | 2025 | 2025 | 0 | 0 | 0 | **REVIEW** — Large reports |
+| Virtual Machines/ | 52 GB | 2014 | 2014 | 0 | 0 | 0 | **DELETE** — Old VMs |
+| FMCBackup-9-26 | 43 GB | 2012-03 | 2023-04 | 2.4 GB | 810 MB | 3.8 GB | Keep (newer) |
+| FMCBackup-7-22 | 42 GB | 2012-03 | 2022-09 | 2.4 GB | 690 MB | 1.0 GB | **DELETE** — Older copy |
+| juli liveoak mac 2022/ | 40 GB | 2022 | 2022 | * | * | * | **REVIEW** — May overlap juli/ |
+| vicd/ | 33 GB | 2013-05 | 2013-05 | 0 | 0 | 0 | **DELETE** — Old VM disk |
+| Dank/ | 28 GB | 2008-04 | 2021-09 | 9.8 GB | 70 MB | 0 | **MOVE** — To /volume3/photo/ |
+| apple/ | 23 GB | 2018 | 2018 | * | * | * | **REVIEW** — iPad backup |
+| octet/ | 15 GB | 2014 | 2014 | 0 | 0 | * | **DELETE** — Duplicate PSTs |
+| caelan/ | 8.3 GB | 2014 | 2014 | * | * | * | **REVIEW** — User backup |
+| LocalBackup/ | 5.9 GB | 2002-08 | 2021-09 | 0 | 48 MB | 571 MB | **DELETE** — Old Synology |
+| rogbackup/ | 4.3 GB | 2013 | 2013 | * | * | * | **REVIEW** — Old PC backup |
+| quicken/ | 4.3 GB | 2024 | 2024 | 0 | 0 | * | Keep (financial) |
+| mail/ | 3.2 GB | 2006 | 2012 | 0 | 0 | * | **AUDIT** — Compare archive |
+| cdbackups/ | 3.2 GB | 2023 | 2023 | * | * | * | **REVIEW** — CD ISOs |
+| sheila/ | 2.2 GB | 2024 | 2024 | * | * | * | Keep (recent) |
+| googleworkspacebackup202823/ | 1.9 GB | 2023 | 2023 | 0 | * | * | Keep (Google export) |
+| snape/ | 847 MB | 2015-01 | 2015-01 | 0 | 0 | 0 | **DELETE** — Old migration |
+| BeerSmith2-hobby-beer/ | 668 MB | 2012-08 | 2014-01 | 0 | 0 | 0 | **CONSOLIDATE** |
+| GDrive/ | 616 MB | 2011-12 | 2021-09 | 457 MB | 9 MB | 86 MB | **REVIEW** |
+| webbackup/ | 558 MB | 2022 | 2022 | 0 | 0 | * | Keep (web config) |
+| hobbies/ | 531 MB | 2014 | 2014 | 0 | 0 | 0 | **CONSOLIDATE** — Beer data |
+| onedrivelibrary/ | 372 MB | 2023 | 2023 | * | * | * | **REVIEW** |
+| oldgoogledrive/ | 212 MB | 2020 | 2020 | * | * | * | **DELETE** |
+| wccases/ | 75 MB | 2023-09 | 2023-09 | 0 | 0 | 0 | Keep (app backup) |
+| CGSGitHub_old/ | 7 MB | 2024-11 | 2024-11 | 0 | 0 | 0 | **REVIEW** |
+| LinkedIn/ | 3 MB | 2020-01 | 2021-09 | 0 | 0 | 0 | Keep |
+| BeerSmith2/ | 2.7 MB | 2014-01 | 2014-01 | 0 | 0 | 0 | **CONSOLIDATE** |
+| claude_files/ | 1.3 MB | 2024 | 2024 | 0 | 0 | * | Keep |
+| CGSGHcopy/ | 1.1 MB | 2024-11 | 2024-11 | 0 | 0 | 1.1 MB | **REVIEW** |
+| paas/ | 328 KB | 2018-08 | 2021-09 | 0 | 0 | 0 | **DELETE** — Old password exports |
+| CGSGHcopy-multi/ | 56 KB | 2024-11 | 2024-11 | 0 | 0 | 13 KB | **DELETE** |
+| AVOCET/ | 0 | — | — | 0 | 0 | 0 | **DELETE** — Empty |
+| CGSGitHub/ | 0 | — | — | 0 | 0 | 0 | **DELETE** — Empty |
+| New folder/ | 0 | — | — | 0 | 0 | 0 | **DELETE** — Empty |
+
+*Note: `*` indicates data not collected (large folder scan incomplete)*
 
 ---
 
@@ -43,15 +97,15 @@ The `/volume3/backup/` folder contains 46 top-level items accumulated over 15+ y
 
 | Rank | Folder | Size | Status |
 |------|--------|------|--------|
-| 1 | mike/ | 2.3 TB | **AUDIT** — HOBBS backup remnants? |
-| 2 | octagon/ | 1.3 TB | **AUDIT** — PST duplicates |
+| 1 | mike/ | 2.3 TB | **KEEP** — Active Windows File History for HOBBS (main PC) |
+| 2 | octagon/ | 1.3 TB | **DELETE** — OCTET PC backup (2012-2014) + duplicate PSTs |
 | 3 | OneDriveMike/ | 653 GB | **DEDUPE** — 3x Apps copies |
 | 4 | PRIME/ | 339 GB | Keep (has VMs) |
 | 5 | gala.sparsebundle | 324 GB | **KEEP** — Active Time Machine |
 | 6 | juli/ | 242 GB | **AUDIT** — iPhoto2.zip |
 | 7 | WindowsImageBackup/ | 236 GB | **REVIEW** — May duplicate PRIME |
 | 8 | #recycle/ | 204 GB | **PURGE** — Empty recycle bin |
-| 9 | hobbs/ | 169 GB | **AUDIT** — Windows.old |
+| 9 | hobbs/ | 169 GB | **DELETE** — Windows.old from Dec 2022 upgrade |
 | 10 | imazing/ | 164 GB | Keep (iPhone backups) |
 | 11 | synoreport/ | 76 GB | **REVIEW** — Why so large? |
 | 12 | Virtual Machines/ | 52 GB | **DELETE** — 10+ year old VMs |
@@ -65,8 +119,8 @@ The `/volume3/backup/` folder contains 46 top-level items accumulated over 15+ y
 
 | Folder | Size | Contents | Dates | Recommendation |
 |--------|------|----------|-------|----------------|
-| **mike/** | 2.3 TB | HOBBS and FUJI-onedrivestuff subfolders. HOBBS likely contains massive backup duplicates. | 2021–2023 | **AUDIT** — Investigate contents. Potential 2+ TB savings if duplicated |
-| **octagon** | 1.3 TB | Outlook PST files and email archives from PRIME-era PC. Contains mike@connet.techupside.com folder. | 2012–2013 | **AUDIT** — Compare with `/volume3/archive/mail/`. If duplicated, DELETE |
+| **mike/** | 2.3 TB | **HOBBS/** (2.2 TB): Windows File History backup of HOBBS PC (main home PC). Includes Music, Videos, Pictures, OneDrive folders. Last updated Nov 2024. **FUJI-onedrivestuff/** (92 MB): OneDrive fragments. | 2021–2024 | **KEEP** — Active backup for primary home PC. May have overlap with OneDriveMike/ but provides local backup redundancy |
+| **octagon** | 1.3 TB | **PST files** (~20 GB): Duplicated in `/volume3/archive/mail/`. **OCTET Windows Backup** (~1.28 TB): Windows File History from retired "OCTET" PC. 10+ years old. | 2012–2014 | **DELETE** — PSTs are duplicates, OCTET PC is retired. Confirm no unique data before deleting for 1.3 TB savings |
 | **OneDriveMike** | 653 GB | OneDrive sync backup. Desktop, Documents, Apps (3 identical copies!), snagit (19 GB), video (36 GB). | 2020–2024 | **DEDUPE** — Delete Apps (1), Apps_old (saves 46 GB). Review for other duplicates |
 | **PRIME** | 339 GB | Full Windows PC backup from 2011-2013. Contains VMs, user data, system files. User files already extracted to `/volume3/archive/PRIME-restore/`. | 2011–2013 | **KEEP for now** — Contains VMs |
 | **juli** | 242 GB | Julia's data including iPhoto2.zip (180 GB), old iPhoto Library, MacProBackup, juli2024 | 2012, 2024 | **AUDIT** — iPhoto2.zip may duplicate `/volume3/photo/` |
@@ -161,7 +215,25 @@ The `/volume3/backup/` folder contains 46 top-level items accumulated over 15+ y
 | OneDriveMike/Apps (1) | 23 GB | **DELETE** — exact duplicate |
 | OneDriveMike/Apps_old | 23 GB | **DELETE** — exact duplicate |
 
-### 3. FMC Work Backups (42 GB savings)
+### 3. HOBBS + OneDrive Overlap (Potential 1+ TB savings)
+
+**HOBBS backup** (mike/HOBBS/) contains FOUR OneDrive folder copies from the HOBBS PC:
+
+| OneDrive Folder in HOBBS | Likely Overlap |
+|--------------------------|----------------|
+| OneDrive | Personal OneDrive |
+| OneDrive - Cadence Group | Work OneDrive (in OneDriveMike?) |
+| OneDrive - Michael Sullivan & Associates | Legacy work account |
+| OneDrive - aptosbarrelclub.com | Club account |
+
+**Potential overlap with:**
+
+- `/volume3/backup/OneDriveMike/` (653 GB) — likely contains same Cadence Group data
+- Current cloud OneDrive — if HOBBS PC is retired, this data is in the cloud
+
+**Action:** Determine if HOBBS PC is still active. If retired, compare OneDrive folders for duplicates before deleting.
+
+### 4. FMC Work Backups (42 GB savings)
 
 | Folder | Size | Status |
 |--------|------|--------|
@@ -221,19 +293,17 @@ The `/volume3/backup/` folder contains 46 top-level items accumulated over 15+ y
 
 ## Potential Savings Summary
 
-| Category | Potential Savings |
-|----------|-------------------|
-| mike/ folder (if HOBBS duplicates confirmed) | ~2.0–2.3 TB |
-| Email/PST deduplication (octagon, octet) | ~1.0–1.3 TB |
-| #recycle bin purge | 204 GB |
-| hobbs/ Windows.old | 169 GB |
-| OneDrive duplicates (Apps copies) | 46 GB |
-| FMC duplicate backup | 42 GB |
-| Old VMs (vicd, Virtual Machines) | 85 GB |
-| Old Windows backups (snape, LocalBackup) | 7 GB |
-| **Total Potential** | **~3.5–4.0 TB** |
-
-The mike/ folder (2.3 TB) is the biggest unknown. If it contains HOBBS backup duplicates as suspected, this could reduce `/volume3/backup/` from ~5.8 TB to under 2 TB.
+| Category | Savings | Status |
+|----------|---------|--------|
+| mike/ folder | 0 | **KEEP** — Active HOBBS backup |
+| octagon/ (OCTET backup + PST dupes) | 1.3 TB | **CONFIRMED DELETE** — OCTET retired |
+| #recycle bin purge | 204 GB | Ready to purge |
+| hobbs/ Windows.old | 169 GB | **CONFIRMED DELETE** — Dec 2022 upgrade remnant |
+| OneDrive duplicates (Apps copies) | 46 GB | Ready to delete |
+| FMC duplicate backup | 42 GB | Ready to delete |
+| Old VMs (vicd, Virtual Machines) | 85 GB | Ready to delete |
+| Old Windows backups (snape, LocalBackup) | 7 GB | Ready to delete |
+| **Total Confirmed Savings** | **~2.0 TB** | |
 
 ---
 
