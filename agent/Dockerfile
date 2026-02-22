@@ -1,27 +1,27 @@
 # HomeIT Agent Docker Image
+# Build with: docker build --network=host -t homeit-agent:latest .
+
 FROM node:20-alpine
 
-# Alpine already includes curl, openssl
-# No apt-get needed - avoids DNS issues during build
+# Install docker CLI for container management
+RUN apk add --no-cache docker-cli curl openssl
 
-# Create app directory
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* ./
+# Copy package files first for better caching
+COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies (use --network=host during build for DNS on Synology)
+# Include dev deps for tsx runtime
+RUN npm ci
 
 # Copy source code
-COPY . .
+COPY src/ ./src/
+COPY tsconfig.json ./
 
-# Build TypeScript
-RUN npm run build
+# Run as root to access docker socket
+# (Synology docker socket requires root access)
 
-# Create non-root user
-RUN adduser -D -s /bin/sh homeit
-USER homeit
-
-# Default command runs the CLI (scheduler will be added later)
-CMD ["node", "dist/cli.js"]
+# Run the daemon (scheduler mode) by default
+# For interactive CLI, use: docker exec -it homeit-agent npx tsx src/cli.ts
+CMD ["npx", "tsx", "src/daemon.ts"]

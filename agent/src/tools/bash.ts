@@ -11,6 +11,9 @@ export interface BashResult {
 
 /**
  * Execute a bash command locally or via SSH on the NAS
+ *
+ * When IN_CONTAINER=true, remote commands run locally instead
+ * (the container runs on Synology with docker socket mounted)
  */
 export async function runBash(
   command: string,
@@ -20,13 +23,22 @@ export async function runBash(
   } = {}
 ): Promise<BashResult> {
   const { remote = false, timeout = 30000 } = options;
+  const inContainer = process.env.IN_CONTAINER === "true";
 
   let fullCommand = command;
 
-  if (remote) {
+  // When running in container on Synology, remote commands run locally
+  // because we already have access to docker socket and local tools
+  if (remote && !inContainer) {
     // Execute on Synology NAS via SSH
     const sshCommand = `ssh -p 2222 mike@10.1.11.98 -o BatchMode=yes -o ConnectTimeout=10 '${command.replace(/'/g, "'\\''")}'`;
     fullCommand = sshCommand;
+  } else if (inContainer) {
+    // Running in container - strip Synology-specific paths
+    fullCommand = command.replace(
+      /\/var\/packages\/ContainerManager\/target\/usr\/bin\//g,
+      ""
+    );
   }
 
   try {
