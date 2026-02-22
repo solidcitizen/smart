@@ -91,6 +91,57 @@ services:
     # Runs scheduler by default; for CLI mode:
     # docker exec -it homeit-agent npm run chat
 
+  # ===================
+  # Supabase (PostgreSQL + Auth)
+  # ===================
+  supabase-db:
+    image: supabase/postgres:15.8.1.085
+    container_name: supabase-db
+    restart: always
+    networks:
+      - supabase
+    ports:
+      - "5433:5432"  # Using 5433 externally since 5432 is in use
+    environment:
+      POSTGRES_PASSWORD: ${SUPABASE_POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+    volumes:
+      - /volume3/docker/supabase/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  supabase-auth:
+    image: supabase/gotrue:v2.164.0
+    container_name: supabase-auth
+    restart: always
+    networks:
+      - supabase
+    ports:
+      - "9999:9999"
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${SUPABASE_POSTGRES_PASSWORD}@supabase-db:5432/postgres
+      GOTRUE_SITE_URL: https://supabase.conant.com
+      GOTRUE_URI_ALLOW_LIST: "*"
+      GOTRUE_JWT_SECRET: ${SUPABASE_JWT_SECRET}
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
+      API_EXTERNAL_URL: https://supabase.conant.com
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+
+networks:
+  supabase:
+    driver: bridge
 
 # ===================
 # STOPPED CONTAINERS (Not in compose - candidates for removal)
