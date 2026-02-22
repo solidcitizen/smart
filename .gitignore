@@ -6,3 +6,9 @@ credentials/
 
 # macOS
 .DS_Store
+
+# HomeIT Agent
+agent/node_modules/
+agent/dist/
+agent/.env
+.env

@@ -69,6 +69,28 @@ services:
     # Host networking for mDNS/Bonjour discovery
     # Web UI at http://10.1.11.98:8581
 
+  # ===================
+  # HomeIT Agent (ITSM)
+  # ===================
+  homeit-agent:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+    container_name: homeit-agent
+    restart: always
+    environment:
+      - TZ=America/Los_Angeles
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - HA_URL=http://localhost:8123
+      - HA_TOKEN=${HA_TOKEN}
+    volumes:
+      - /volume3/docker/homeit:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ~/.ssh:/home/homeit/.ssh:ro  # For SSH to NAS (if needed)
+    network_mode: host
+    # Runs scheduler by default; for CLI mode:
+    # docker exec -it homeit-agent npm run chat
+
 
 # ===================
 # STOPPED CONTAINERS (Not in compose - candidates for removal)
