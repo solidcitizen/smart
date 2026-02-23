@@ -103,6 +103,7 @@ services:
     ports:
       - "5433:5432"  # Using 5433 externally since 5432 is in use
     environment:
+      TZ: America/Los_Angeles
       POSTGRES_PASSWORD: ${SUPABASE_POSTGRES_PASSWORD}
       POSTGRES_DB: postgres
     volumes:
@@ -122,6 +123,7 @@ services:
     ports:
       - "9999:9999"
     environment:
+      TZ: America/Los_Angeles
       GOTRUE_API_HOST: 0.0.0.0
       GOTRUE_API_PORT: 9999
       GOTRUE_DB_DRIVER: postgres
