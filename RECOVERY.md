@@ -392,6 +392,40 @@ curl http://localhost:8123
 # Re-import to DSM: Security > Certificate > Add > Import
 ```
 
+### Supabase Recovery
+
+**Data locations:**
+- PostgreSQL data: `/volume3/docker/supabase/postgres/`
+- Daily SQL dumps: `/volume3/docker/supabase/backups/YYYYMMDD.sql`
+- Config: `/volume3/docker/supabase/`
+
+**Recovery from SQL dump:**
+
+```bash
+ssh mike@10.1.11.98 -p 2222
+docker=/var/packages/ContainerManager/target/usr/bin/docker
+
+# Stop auth container (depends on db)
+$docker stop supabase-auth
+
+# Restore from most recent dump
+$docker exec -i supabase-db psql -U postgres < /volume3/docker/supabase/backups/YYYYMMDD.sql
+
+# Restart auth
+$docker start supabase-auth
+
+# Verify
+$docker exec supabase-db psql -U postgres -c '\dt'
+curl http://localhost:9999/health
+```
+
+**Full recovery (from Hyper Backup):**
+
+1. Restore `/volume3/docker/supabase/` from Hyper Backup
+2. Start containers: `cd /volume3/docker && docker compose up -d supabase-db supabase-auth`
+3. If data directory was lost, restore from SQL dump (see above)
+4. Re-run init.sql if roles are missing: `docker exec -i supabase-db psql -U postgres < /volume3/docker/supabase/init.sql`
+
 ### Photo / Archive / Video Recovery
 
 1. Open DSM → Hyper Backup → select S3 task

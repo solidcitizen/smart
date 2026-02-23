@@ -30,6 +30,15 @@
 
 ## DNS (GoDaddy)
 - ha.conant.com: CNAME -> conant.synology.me (follows Synology DDNS)
+- supabase.conant.com: CNAME -> conant.synology.me (for GoTrue auth)
+
+## Supabase (Self-Hosted)
+- PostgreSQL: 10.1.11.98:5432 (internal only)
+- GoTrue Auth: http://10.1.11.98:9999 (internal) / https://supabase.conant.com (external)
+- Data: /volume3/docker/supabase/postgres/
+- Config: /volume3/docker/supabase/
+- Containers: supabase-db, supabase-auth
+- Backup: Daily pg_dump at 4 AM, 7-day rotation
 
 ## SmartThings
 - Hub ID: 3545970a-9fcf-440d-930a-d25686b48d74

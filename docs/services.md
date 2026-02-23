@@ -42,10 +42,12 @@ Single source of truth for all systems, services, and their current configuratio
 | 2222 | SSH | IRIS (10.1.11.98) |
 | 5000 | DSM HTTP | IRIS |
 | 5001 | DSM HTTPS | IRIS |
+| 5432 | PostgreSQL (Supabase) | IRIS |
 | 8123 | Home Assistant | IRIS |
 | 8581 | Homebridge | IRIS |
 | 9000 | Portainer HTTP | IRIS |
 | 9443 | Portainer HTTPS | IRIS |
+| 9999 | Supabase Auth (GoTrue) | IRIS |
 
 ### External Access
 - **ha.conant.com** — DSM reverse proxy → localhost:8123 (WebSocket enabled)
@@ -155,8 +157,36 @@ All locks on **RBoy Universal Enhanced Z-Wave Lock** driver (`c8d6a4ae`).
 | portainer | portainer/portainer-ce:latest | bridge (9000, 9443) | Running |
 | watchtower | containrrr/watchtower:latest | bridge (--cleanup) | Running |
 | oznu-homebridge | oznu/homebridge:latest | host | Running |
+| supabase-db | supabase/postgres:15.8.1.085 | supabase (5432) | Running |
+| supabase-auth | supabase/gotrue:v2.164.0 | supabase (9999) | Running |
 
 Config: `/volume3/docker/docker-compose.yml`
+
+---
+
+## Supabase (Self-Hosted)
+
+Self-hosted PostgreSQL database and authentication service for home projects.
+
+| Setting | Value |
+|---------|-------|
+| PostgreSQL | `10.1.11.98:5432` (internal only) |
+| GoTrue Auth | `http://10.1.11.98:9999` or `https://supabase.conant.com` |
+| Data Directory | `/volume3/docker/supabase/postgres/` |
+| Config | `/volume3/docker/supabase/` |
+| Init Script | `supabase/init.sql` (run once after first start) |
+| Backup | Daily pg_dump at 4 AM to `/volume3/docker/supabase/backups/` |
+
+**Connection string for applications:**
+```
+postgresql://postgres:<password>@10.1.11.98:5432/postgres
+```
+
+**Environment variables required in `.env`:**
+- `SUPABASE_POSTGRES_PASSWORD` - PostgreSQL password
+- `SUPABASE_JWT_SECRET` - JWT signing secret (32 chars)
+
+> First-time setup: After containers start, run `docker exec -i supabase-db psql -U postgres < /volume3/docker/supabase/init.sql`
 
 ---
 
